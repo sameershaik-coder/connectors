@@ -20,7 +20,7 @@ class CPEClient:
         :param header:
         """
         headers = {"Bearer": api_key, "User-Agent": header}
-        self.token = api_key
+        #self.token = api_key
         self.helper = helper
         self.session = requests.Session()
         self.session.headers.update(headers)
@@ -68,6 +68,21 @@ class CPEClient:
             raise Exception(
                 "[API] Attempting to retrieve data failed. Wait for connector to re-run..."
             )
+    
+    def get_some_orkl_collection(self, cpe_params=None):
+        """
+        If params is None, retrieve all CPEs in National Vulnerability Database
+        :param cpe_params: Params to filter what list to return
+        :return: A list of dicts of the complete collection of CPE from NVD
+        """
+        try:
+            response = self._request_data(self, BASE_URL, params=cpe_params)
+            print(response.text)
+            cpe_collection = response.json()
+            return cpe_collection
+
+        except Exception as err:
+            self.helper.log_error(err)
 
     def get_complete_collection(self, cpe_params=None):
         """
