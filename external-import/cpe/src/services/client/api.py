@@ -7,14 +7,14 @@ from urllib3.util import Retry
 from .endpoints import BASE_URL
 
 
-class CVEClient:
+class CPEClient:
     """
-    Working with CVE API
+    Working with CPE API
     """
 
     def __init__(self, api_key, helper, header):
         """
-        Initialize CVE API with necessary configurations
+        Initialize CPE API with necessary configurations
         :param api_key: API key in string
         :param helper: OCTI helper
         :param header:
@@ -69,17 +69,17 @@ class CVEClient:
                 "[API] Attempting to retrieve data failed. Wait for connector to re-run..."
             )
 
-    def get_complete_collection(self, cve_params=None):
+    def get_complete_collection(self, cpe_params=None):
         """
-        If params is None, retrieve all CVEs in National Vulnerability Database
-        :param cve_params: Params to filter what list to return
-        :return: A list of dicts of the complete collection of CVE from NVD
+        If params is None, retrieve all CPEs in National Vulnerability Database
+        :param cpe_params: Params to filter what list to return
+        :return: A list of dicts of the complete collection of CPE from NVD
         """
         try:
-            response = self._request_data(self, BASE_URL, params=cve_params)
+            response = self._request_data(self, BASE_URL, params=cpe_params)
 
-            cve_collection = response.json()
-            return cve_collection
+            cpe_collection = response.json()
+            return cpe_collection
 
         except Exception as err:
             self.helper.log_error(err)
