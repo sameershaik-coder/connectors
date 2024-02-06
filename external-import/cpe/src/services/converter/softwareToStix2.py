@@ -1,7 +1,7 @@
 import datetime
 
 import stix2 
-from pycti import Identity, StixCoreRelationship,CustomObservableText,StixCyberObservable, StixCyberObservableTypes,Vulnerability  # type: ignore
+from pycti import Identity, StixCoreRelationship  # type: ignore
 from services.utils import APP_VERSION, ConfigCPE  # type: ignore
 
 from ..client import CPESoftware  # type: ignore
