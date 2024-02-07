@@ -1,7 +1,7 @@
 import datetime
 
 import stix2 
-from pycti import Identity, StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual  # type: ignore
+from pycti import Identity, StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
 from services.utils import APP_VERSION, ConfigCPE  # type: ignore
 
 from ..client import CPESoftware  # type: ignore
@@ -168,7 +168,7 @@ class CPEConverter:
             result.append(report)
             
             for threat_actor in threat_actors:
-                threat_actor_obj_description = "Source : "
+                threat_actor_obj_description = "Source Name : "
                 threat_actor_obj_description = threat_actor_obj_description + threat_actor["source_name"] 
                 
                 threat_actor_obj = stix2.ThreatActor(
@@ -189,6 +189,23 @@ class CPEConverter:
                 if threat_actor_obj is not None:
                     relationship = self._create_relationship(report.id, threat_actor_obj.id, "related-to")
                     result.append(relationship)
+                    
+                tools = threat_actor["tools"]
+                tool_objects = []
+                if(len(tools) > 0):
+                    for tool in tools:
+                        # Create tool object
+                        tool_obj = stix2.Tool(
+                            id=Tool.generate_id(tool),
+                            name=tool,
+                            labels="orkl-threat-actor-tool",
+                            allow_custom=True,
+                        )
+                        if tool_obj is not None:
+                            relationship = self._create_relationship(threat_actor_obj.id, tool_obj.id, "related-to")
+                            result.append(tool_obj)
+                            result.append(relationship)
+                            
                 
             
             for source_object in source_objects:
