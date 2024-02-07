@@ -87,15 +87,38 @@ class CPEConverter:
             report_names = report["report_names"]
             threat_actors = report["threat_actors"]
             
-            event_markings = [stix2.TLP_WHITE]
+            
+            event_markings = []
+            
+            report_name = report_names[0].split(".")[0]
             
             external_references=[]
+            
+            if "files" in report:
+                files=report["files"]
+                if "pdf" in files:
+                    external_reference = stix2.ExternalReference(
+                        source_name="ORKL",  url=files["pdf"]
+                    )
+                    external_references.append(external_reference)
+                if "text" in files:
+                    external_reference = stix2.ExternalReference(
+                        source_name="ORKL",  url=files["text"]
+                    )
+                    external_references.append(external_reference)
+                if "img" in files:
+                    external_reference = stix2.ExternalReference(
+                        source_name="ORKL",  url=files["img"]
+                    )
+                    external_references.append(external_reference)
+            
             if len(references) > 0:
                 external_reference = stix2.ExternalReference(
                     source_name="ORKL",  url=references[0]
                 )
-                external_references = [external_reference]
-            object_observables=[]
+                external_references.append(external_reference)
+                
+            source_objects=[]
             if len(sources) > 0:
                 custom_properties = {
                         "x_opencti_description": sources[0]["description"],
@@ -104,23 +127,34 @@ class CPEConverter:
                         "created_by_ref": self.author.id,
                         "external_references": [],
                     }
-                object_observable = CustomObservableText(
-                    value=sources[0]["id"],
+                
+                if sources[0]["name"] != None:
+                    source_object = stix2.Identity(
+                    id=Identity.generate_id(sources[0]["name"], "organization"),
+                    name=sources[0]["name"],
+                    description=sources[0]["description"],
+                    created_by_ref=self.author.id,
                     custom_properties=custom_properties,
+                    allow_custom=True,
                 )
-                object_observables.append(object_observable)
-                result.append(object_observable)
+                else:
+                    source_object = CustomObservableText(
+                        value=sources[0]["id"],
+                        custom_properties=custom_properties,
+                    )
+                source_objects.append(source_object)
+                result.append(source_object)
             
             report = stix2.Report(
-                id=Report.generate_id(title,created_at),
-                name=title,
+                id=Report.generate_id(report_name,created_at),
+                name=report_name,
                 description=plain_text,
                 published=created_at,
-                created=created_at,
-                modified=updated_at,
+                created=file_creation_date,
+                modified=file_modification_date,
                 report_types=["orkl-report"],
                 object_marking_refs=event_markings,
-                object_refs=object_observables,
+                object_refs=source_objects,
                 external_references=external_references,
                     confidence=60,
                     custom_properties={
@@ -155,12 +189,10 @@ class CPEConverter:
                 if threat_actor_obj is not None:
                     relationship = self._create_relationship(report.id, threat_actor_obj.id, "related-to")
                     result.append(relationship)
-                for object_observable in object_observables:
-                    relationship = self._create_relationship(threat_actor_obj.id, object_observable.id, "related-to")                
-                    result.append(relationship)
+                
             
-            for object_observable in object_observables:
-                relationship = self._create_relationship(report.id, object_observable.id, "related-to")                
+            for source_object in source_objects:
+                relationship = self._create_relationship(report.id, source_object.id, "created-by")                
                 result.append(relationship)
                 
         return result
