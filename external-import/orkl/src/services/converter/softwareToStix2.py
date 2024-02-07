@@ -168,20 +168,20 @@ class CPEConverter:
             result.append(report)
             
             for threat_actor in threat_actors:
-                threat_actor_obj_description = "source name: " + threat_actor["source_name"] + "\n"
-                threat_actor_obj_description += "aliases: "
-                if "aliases" in threat_actor:
-                    threat_actor_obj_description +=  str(threat_actor["aliases"]) + "\n"
+                threat_actor_obj_description = "Source : "
+                threat_actor_obj_description = threat_actor_obj_description + threat_actor["source_name"] 
+                
                 threat_actor_obj = stix2.ThreatActor(
                     id=ThreatActorIndividual.generate_id(threat_actor["id"]),
                     name=threat_actor["main_name"],
-                    description=threat_actor["main_name"],
                     created=threat_actor["created_at"],
                     modified=threat_actor["updated_at"],
                     labels="ORKL-threat-actor",
+                    description=threat_actor_obj_description,
                     custom_properties={
                         "x_opencti_score": 50,
                         "created_by_ref": self.author.id,
+                        "x_opencti_aliases": threat_actor["aliases"],
                     },
                     allow_custom=True,
                 )
