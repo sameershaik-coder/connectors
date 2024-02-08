@@ -69,15 +69,20 @@ class CPEClient:
                 "[API] Attempting to retrieve data failed. Wait for connector to re-run..."
             )
     
-    def get_some_orkl_collection(self, cpe_params=None):
+    def get_some_orkl_collection(self,limit,offset, cpe_params=None):
         """
         If params is None, retrieve all CPEs in National Vulnerability Database
         :param cpe_params: Params to filter what list to return
         :return: A list of dicts of the complete collection of CPE from NVD
         """
         try:
-            response = self._request_data(self, BASE_URL, params=cpe_params)
-            print(response.text)
+            params={
+                "limit": limit,
+                "offset": offset
+            }
+            response = self._request_data(self, BASE_URL, params=params)
+            #response = self._request_data(self, BASE_URL, params=cpe_params)
+            #print(response.text)
             cpe_collection = response.json()
             return cpe_collection
 
