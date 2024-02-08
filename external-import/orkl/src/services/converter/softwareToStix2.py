@@ -98,17 +98,17 @@ class CPEConverter:
                 files=report["files"]
                 if "pdf" in files:
                     external_reference = stix2.ExternalReference(
-                        source_name="ORKL",  url=files["pdf"]
+                        source_name="PDF",  url=files["pdf"]
                     )
                     external_references.append(external_reference)
                 if "text" in files:
                     external_reference = stix2.ExternalReference(
-                        source_name="ORKL",  url=files["text"]
+                        source_name="TEXT",  url=files["text"]
                     )
                     external_references.append(external_reference)
                 if "img" in files:
                     external_reference = stix2.ExternalReference(
-                        source_name="ORKL",  url=files["img"]
+                        source_name="IMAGE",  url=files["img"]
                     )
                     external_references.append(external_reference)
             
@@ -169,7 +169,7 @@ class CPEConverter:
             
             for threat_actor in threat_actors:
                 threat_actor_obj_description = "Source Name : "
-                threat_actor_obj_description = threat_actor_obj_description + threat_actor["source_name"] 
+                threat_actor_obj_description = threat_actor_obj_description + threat_actor["source_name"]
                 
                 threat_actor_obj = stix2.ThreatActor(
                     id=ThreatActorIndividual.generate_id(threat_actor["id"]),
@@ -202,14 +202,14 @@ class CPEConverter:
                             allow_custom=True,
                         )
                         if tool_obj is not None:
-                            relationship = self._create_relationship(threat_actor_obj.id, tool_obj.id, "related-to")
+                            relationship = self._create_relationship(threat_actor_obj.id, tool_obj.id, "uses")
                             result.append(tool_obj)
                             result.append(relationship)
                             
                 
             
             for source_object in source_objects:
-                relationship = self._create_relationship(report.id, source_object.id, "created-by")                
+                relationship = self._create_relationship(report.id, source_object.id, "related-to")                
                 result.append(relationship)
                 
         return result

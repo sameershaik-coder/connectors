@@ -200,78 +200,90 @@ class CPEConnector:
 
     def process_data(self) -> None:
         try:
-            """
-            Get the current state and check if connector already runs
-            """
+            
+            # TEMP CODE BEGIN
             now = datetime.now()
             current_time = int(datetime.timestamp(now))
+            work_id = self._initiate_work(current_time)
             current_state = self.helper.get_state()
+            last_run = current_state["last_run"]
+            self._maintain_data(now, last_run, work_id)
+            
+            # TEMP CODE END
+            
+            
+            # """
+            # Get the current state and check if connector already runs
+            # """
+            # now = datetime.now()
+            # current_time = int(datetime.timestamp(now))
+            # current_state = self.helper.get_state()
 
-            if current_state is not None and "last_run" in current_state:
-                last_run = current_state["last_run"]
+            # if current_state is not None and "last_run" in current_state:
+            #     last_run = current_state["last_run"]
 
-                msg = "[CONNECTOR] Connector last run: " + datetime.utcfromtimestamp(
-                    last_run
-                ).strftime("%Y-%m-%d %H:%M:%S")
-                self.helper.log_info(msg)
-            else:
-                last_run = None
-                msg = "[CONNECTOR] Connector has never run..."
-                self.helper.log_info(msg)
+            #     msg = "[CONNECTOR] Connector last run: " + datetime.utcfromtimestamp(
+            #         last_run
+            #     ).strftime("%Y-%m-%d %H:%M:%S")
+            #     self.helper.log_info(msg)
+            # else:
+            #     last_run = None
+            #     msg = "[CONNECTOR] Connector has never run..."
+            #     self.helper.log_info(msg)
 
-            """
-            ======================================================
-            Main process if connector successfully works
-            ======================================================
-            """
+            # """
+            # ======================================================
+            # Main process if connector successfully works
+            # ======================================================
+            # """
 
-            """
-            ================================================================
-            If the connector never runs, import the most recent CVEs
-            from the last max_date_range (can be configured) to now
-            ================================================================
-            """
-            if last_run is None:
-                # Initiate work_id to track the job
-                work_id = self._initiate_work(current_time)
-                """
-                =================================================================
-                If the connector never runs and user wants to pull CVE history
-                =================================================================
-                """
-                if self.config.pull_history:
-                    start_date = datetime(self.config.history_start_year, 1, 1)
-                    end_date = now
-                    self._import_history(start_date, end_date, work_id)
-                else:
-                    self._import_recent(now, work_id)
+            # """
+            # ================================================================
+            # If the connector never runs, import the most recent CVEs
+            # from the last max_date_range (can be configured) to now
+            # ================================================================
+            # """
+            # if last_run is None:
+            #     # Initiate work_id to track the job
+            #     work_id = self._initiate_work(current_time)
+            #     """
+            #     =================================================================
+            #     If the connector never runs and user wants to pull CVE history
+            #     =================================================================
+            #     """
+            #     if self.config.pull_history:
+            #         start_date = datetime(self.config.history_start_year, 1, 1)
+            #         end_date = now
+            #         self._import_history(start_date, end_date, work_id)
+            #     else:
+            #         self._import_recent(now, work_id)
 
-                self.update_connector_state(current_time, work_id)
+            #     self.update_connector_state(current_time, work_id)
 
-                """
-                ===================================================================
-                Import CVEs from the last run to now if maintain data is True
-                If the connector runs, and last run is more than current interval
-                ===================================================================
-                """
-            elif (
-                last_run is not None
-                and self.config.maintain_data
-                and (current_time - last_run) >= int(self.config.interval)
-            ):
-                # Initiate work_id to track the job
-                work_id = self._initiate_work(current_time)
-                self._maintain_data(now, last_run, work_id)
-                self.update_connector_state(current_time, work_id)
+            #     """
+            #     ===================================================================
+            #     Import CVEs from the last run to now if maintain data is True
+            #     If the connector runs, and last run is more than current interval
+            #     ===================================================================
+            #     """
+            # elif (
+            #     last_run is not None
+            #     and self.config.maintain_data
+            #     and (current_time - last_run) >= int(self.config.interval)
+            # ):
+            #     # Initiate work_id to track the job
+            #     work_id = self._initiate_work(current_time)
+            #     self._maintain_data(now, last_run, work_id)
+            #     self.update_connector_state(current_time, work_id)
 
-            else:
-                new_interval = self.config.interval - (current_time - last_run)
-                new_interval_in_hours = round(new_interval / 60 / 60, 2)
-                self.helper.log_info(
-                    "[CONNECTOR] Connector will not run, next run in: "
-                    + str(new_interval_in_hours)
-                    + " hours"
-                )
+            # else:
+            #     new_interval = self.config.interval - (current_time - last_run)
+            #     new_interval_in_hours = round(new_interval / 60 / 60, 2)
+            #     self.helper.log_info(
+            #         "[CONNECTOR] Connector will not run, next run in: "
+            #         + str(new_interval_in_hours)
+            #         + " hours"
+            #     )
 
             time.sleep(5)
 
