@@ -78,7 +78,9 @@ class CPEClient:
         try:
             params={
                 "limit": limit,
-                "offset": offset
+                "offset": offset,
+                "order_by": "file_modification_date",
+                "order": "desc"
             }
             response = self._request_data(self, BASE_URL, params=params)
             #response = self._request_data(self, BASE_URL, params=cpe_params)

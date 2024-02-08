@@ -1,5 +1,5 @@
 import datetime
-
+import time
 import stix2 
 from pycti import Identity, StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
 from services.utils import APP_VERSION, ConfigCPE  # type: ignore
@@ -60,7 +60,7 @@ class CPEConverter:
         offset=0
         limit=10
         while True:
-            reports_collection = self.client_api.get_softwares(cpe_params)["data"]
+            reports_collection = self.client_api.get_softwares(limit,offset,cpe_params)["data"]
             results=[]
             if(len(reports_collection) == 0):
                 break
@@ -68,17 +68,17 @@ class CPEConverter:
                 # Process and store data in chunks of 100
                 for i in range(0, len(reports_collection), 1):
                     # check if report already exists in the opencti
-                    report_name = reports_collection[i]["report_names"][0].split(".")[0]
-                    reports = self.helper.api.stix_domain_object.list(
-                                types=["Reports"],
-                                filters={
-                                    "mode": "and",
-                                    "filters": [{"key": "name", "values": [report_name]}],
-                                    "filterGroups": [],
-                                },
-                            )
-                    if len(reports) > 0:
-                        print(f"Report {report_name} already exists in the opencti")
+                    # report_name = reports_collection[i]["report_names"][0].split(".")[0]
+                    # reports = self.helper.api.stix_domain_object.list(
+                    #             types=["Reports"],
+                    #             filters={
+                    #                 "mode": "and",
+                    #                 "filters": [{"key": "name", "values": [report_name]}],
+                    #                 "filterGroups": [],
+                    #             },
+                    #         )
+                    # if len(reports) > 0:
+                    #     print(f"Report {report_name} already exists in the opencti")
                     processed_object = self.process_object(reports_collection[i])
                     if len(processed_object) != 0:
                         vulnerabilities_bundle = self._to_stix_bundle(processed_object)
@@ -96,8 +96,10 @@ class CPEConverter:
                             update=self.config.update_existing_data,
                             work_id=work_id,
                         )
-                    # Move the offset
-                    offset += limit
+                # Move the offset
+                time.sleep(30)
+                offset += limit
+                
 
         return results
     
@@ -234,21 +236,20 @@ class CPEConverter:
                 relationship = self._create_relationship(report.id, threat_actor_obj.id, "related-to")
                 result.append(relationship)
                 
-            tools = threat_actor["tools"]
-            if(len(tools) > 0):
-                for tool in tools:
-                    # Create tool object
-                    tool_obj = stix2.Tool(
-                        id=Tool.generate_id(tool),
-                        name=tool,
-                        labels="orkl-threat-actor-tool",
-                        allow_custom=True,
-                    )
-                    if tool_obj is not None:
-                        relationship = self._create_relationship(threat_actor_obj.id, tool_obj.id, "uses")
-                        result.append(tool_obj)
-                        result.append(relationship)
-                        
+            # tools = threat_actor["tools"]
+            # if tools:
+            #     for tool in tools:
+            #         # Create tool object
+            #         tool_obj = stix2.Tool(
+            #             id=Tool.generate_id(tool),
+            #             name=tool,
+            #             labels="orkl-threat-actor-tool",
+            #             allow_custom=True,
+            #         )
+            #         if tool_obj is not None:
+            #             relationship = self._create_relationship(threat_actor_obj.id, tool_obj.id, "uses")
+            #             result.append(tool_obj)
+            #             result.append(relationship)
             
         
         for source_object in source_objects:
