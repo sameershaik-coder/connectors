@@ -69,6 +69,11 @@ class CPEClient:
                 "[API] Attempting to retrieve data failed. Wait for connector to re-run..."
             )
     
+    def get_orkl_latest_version(self):
+        response = self._request_data(self, BASE_URL)
+        cpe_collection = response.json()
+        return cpe_collection
+    
     def get_some_orkl_collection(self,limit,offset, cpe_params=None):
         """
         If params is None, retrieve all CPEs in National Vulnerability Database
@@ -79,10 +84,12 @@ class CPEClient:
             params={
                 "limit": limit,
                 "offset": offset,
-                "order_by": "file_modification_date",
                 "order": "desc"
             }
-            response = self._request_data(self, BASE_URL, params=params)
+            # params={
+            #     "order": "desc"
+            # }
+            response = self._request_data(self, BASE_URL+'/entries', params=params)
             #response = self._request_data(self, BASE_URL, params=cpe_params)
             #print(response.text)
             cpe_collection = response.json()

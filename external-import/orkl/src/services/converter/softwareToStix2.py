@@ -58,9 +58,9 @@ class CPEConverter:
         :return: List of data converted into STIX2
         """
         offset=0
-        limit=10
+        limit=100
         while True:
-            reports_collection = self.client_api.get_softwares(limit,offset,cpe_params)["data"]
+            reports_collection = self.client_api.get_softwares(limit,offset,cpe_params)["data"]["entries"]
             results=[]
             if(len(reports_collection) == 0):
                 break

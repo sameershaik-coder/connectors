@@ -54,6 +54,12 @@ class ConfigCPE:
             ["cve", "api_key"],
             self.load,
         )
+        
+        self.orkl_sync_from_version = get_config_variable(
+            "ORKL_SYNC_FROM_VERSION",
+            ["cve", "orkl_sync_from_version"],
+            self.load,
+        )
 
         self.config_interval = get_config_variable(
             "CVE_INTERVAL",
