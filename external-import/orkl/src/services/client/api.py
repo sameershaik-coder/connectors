@@ -70,7 +70,12 @@ class CPEClient:
             )
     
     def get_orkl_latest_version(self):
-        response = self._request_data(self, BASE_URL)
+        response = self._request_data(self, BASE_URL+"/version")
+        cpe_collection = response.json()
+        return cpe_collection
+    
+    def get_report_by_id(self, id):
+        response = self._request_data(self, BASE_URL+'/entry/'+id)
         cpe_collection = response.json()
         return cpe_collection
     
@@ -89,7 +94,7 @@ class CPEClient:
             # params={
             #     "order": "desc"
             # }
-            response = self._request_data(self, BASE_URL+'/entries', params=params)
+            response = self._request_data(self, BASE_URL+'/version/entries', params=params)
             #response = self._request_data(self, BASE_URL, params=cpe_params)
             #print(response.text)
             cpe_collection = response.json()

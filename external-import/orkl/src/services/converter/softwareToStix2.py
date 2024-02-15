@@ -60,7 +60,9 @@ class CPEConverter:
         offset=0
         limit=100
         while True:
-            reports_collection = self.client_api.get_softwares(limit,offset,cpe_params)["data"]["entries"]
+            reports_collection = self.client_api.get_reports(limit,offset,cpe_params)
+
+            # reports_collection = self.client_api.get_reports(limit,offset,cpe_params)["data"]["entries"]
             results=[]
             if(len(reports_collection) == 0):
                 break
@@ -211,45 +213,46 @@ class CPEConverter:
         
         result.append(report)
         
-        for threat_actor in threat_actors:
-            threat_actor_obj_description = f"Source Name : {threat_actor['source_name']} and Source ID : {threat_actor['source_id']}"
-            threat_actor_obj_description = "{}\n".format(threat_actor_obj_description)
-            threat_actor_obj_description = threat_actor_obj_description + f"Aliases : {threat_actor['aliases']}"
-            
-            threat_actor_obj = stix2.ThreatActor(
-                id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
-                name=threat_actor["main_name"],
-                description=threat_actor_obj_description,
-                created=threat_actor["created_at"],
-                modified=threat_actor["updated_at"],
-                labels="ORKL-threat-actor",
-                custom_properties={
-                    "x_opencti_description": threat_actor_obj_description,
-                    "x_opencti_score": 50,
-                    "created_by_ref": self.author.id,
-                    "x_opencti_aliases": threat_actor["aliases"],
-                },
-                allow_custom=True,
-            )
-            result.append(threat_actor_obj)
-            if threat_actor_obj is not None:
-                relationship = self._create_relationship(report.id, threat_actor_obj.id, "related-to")
-                result.append(relationship)
+        if len(threat_actors) > 0:
+            for threat_actor in threat_actors:
+                threat_actor_obj_description = f"Source Name : {threat_actor['source_name']} and Source ID : {threat_actor['source_id']}"
+                threat_actor_obj_description = "{}\n".format(threat_actor_obj_description)
+                threat_actor_obj_description = threat_actor_obj_description + f"Aliases : {threat_actor['aliases']}"
                 
-            # tools = threat_actor["tools"]
-            # if tools:
-            #     for tool in tools:
-            #         # Create tool object
-            #         tool_obj = stix2.Tool(
-            #             id=Tool.generate_id(tool),
-            #             name=tool,
-            #             labels="orkl-threat-actor-tool",
-            #             allow_custom=True,
-            #         )
-            #         if tool_obj is not None:
-            #             relationship = self._create_relationship(threat_actor_obj.id, tool_obj.id, "uses")
-            #             result.append(tool_obj)
-            #             result.append(relationship)
+                threat_actor_obj = stix2.ThreatActor(
+                    id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
+                    name=threat_actor["main_name"],
+                    description=threat_actor_obj_description,
+                    created=threat_actor["created_at"],
+                    modified=threat_actor["updated_at"],
+                    labels="ORKL-threat-actor",
+                    custom_properties={
+                        "x_opencti_description": threat_actor_obj_description,
+                        "x_opencti_score": 50,
+                        "created_by_ref": self.author.id,
+                        "x_opencti_aliases": threat_actor["aliases"],
+                    },
+                    allow_custom=True,
+                )
+                result.append(threat_actor_obj)
+                if threat_actor_obj is not None:
+                    relationship = self._create_relationship(report.id, threat_actor_obj.id, "related-to")
+                    result.append(relationship)
+                
+                # tools = threat_actor["tools"]
+                # if tools:
+                #     for tool in tools:
+                #         # Create tool object
+                #         tool_obj = stix2.Tool(
+                #             id=Tool.generate_id(tool),
+                #             name=tool,
+                #             labels="orkl-threat-actor-tool",
+                #             allow_custom=True,
+                #         )
+                #         if tool_obj is not None:
+                #             relationship = self._create_relationship(threat_actor_obj.id, tool_obj.id, "uses")
+                #             result.append(tool_obj)
+                #             result.append(relationship)
             
         
         for source_object in source_objects:
