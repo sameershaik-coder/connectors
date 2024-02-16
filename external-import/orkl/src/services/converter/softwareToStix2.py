@@ -3,7 +3,7 @@ import time
 import stix2 
 from pycti import Identity, StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
 from services.utils import APP_VERSION, ConfigCPE  # type: ignore
-
+from datetime import datetime
 from ..client import CPESoftware  # type: ignore
 
 
@@ -105,6 +105,19 @@ class CPEConverter:
 
         return results
     
+    def check_and_replace_date(self, date_str):
+        try:
+            # Attempt to parse the date string
+            datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+        except ValueError:
+            # If parsing fails, replace the date with the current date
+            print("Invalid date format in {date_str}. Replacing with current date.")
+            default_date_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            return default_date_str
+        else:
+            # If parsing succeeds, return the original date
+            return date_str
+    
     def process_object(self, object: dict) -> list:
         trimmed_list = object
 
@@ -118,13 +131,16 @@ class CPEConverter:
         
         id = report["id"]
         created_at = report["created_at"]
+        created_at = self.check_and_replace_date(created_at)
         updated_at = report["updated_at"]
         deleted_at = report["deleted_at"]
         sha1_hash = report["sha1_hash"]
         title = report["title"]
         authors = report["authors"]
         file_creation_date = report["file_creation_date"]
+        file_creation_date=self.check_and_replace_date(file_creation_date)
         file_modification_date = report["file_modification_date"]
+        file_modification_date=self.check_and_replace_date(file_modification_date)
         file_size = report["file_size"]
         plain_text = report["plain_text"]
         language = report["language"]
