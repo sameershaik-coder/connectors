@@ -1,11 +1,11 @@
 import datetime
 import time
 import stix2 
-from pycti import Identity, StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
+from pycti import Identity,StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
 from services.utils import APP_VERSION, ConfigCPE  # type: ignore
 from datetime import datetime
 from ..client import CPESoftware  # type: ignore
-
+from stix2 import v21
 
 class CPEConverter:
     def __init__(self, helper):
@@ -30,6 +30,7 @@ class CPEConverter:
         """
         
         software_objects = self.softwares_to_stix2(work_id, cpe_params)
+        
 
         # if len(software_objects) != 0:
         #     vulnerabilities_bundle = self._to_stix_bundle(software_objects)
@@ -98,8 +99,10 @@ class CPEConverter:
                                 update=self.config.update_existing_data,
                                 work_id=work_id,
                             )
+                            print("Sleeping for 600 seconds")
+                            time.sleep(600)
+                            
                     # Move the offset
-                    time.sleep(30)
                     offset += limit
                 
 
@@ -170,24 +173,24 @@ class CPEConverter:
             files=report["files"]
             if "pdf" in files:
                 external_reference = stix2.ExternalReference(
-                    source_name=report_source_name+" PDF",  url=files["pdf"]
+                    source_name=report_source_name+"Report PDF",  url=files["pdf"]
                 )
                 external_references.append(external_reference)
             if "text" in files:
                 external_reference = stix2.ExternalReference(
-                    source_name=report_source_name+" TEXT",  url=files["text"]
+                    source_name=report_source_name+"Report TEXT",  url=files["text"]
                 )
                 external_references.append(external_reference)
             if "img" in files:
                 external_reference = stix2.ExternalReference(
-                    source_name=report_source_name+" IMAGE",  url=files["img"]
+                    source_name=report_source_name+"Report IMAGE",  url=files["img"]
                 )
                 external_references.append(external_reference)
         
         if len(references) > 0:
             
             external_reference = stix2.ExternalReference(
-                source_name=report_source_name + " source",  url=references[0]
+                source_name=report_source_name + "Report source",  url=references[0]
             )
             external_references.append(external_reference)
             
@@ -218,21 +221,22 @@ class CPEConverter:
         
         if len(threat_actors) > 0:
             threat_actors_ids = []
+            threat_actors_tools_ids = []    
             for threat_actor in threat_actors:
                 # create threat actor tools objects
                 tools = threat_actor["tools"]
-                if tools:
-                    threat_actors_tools_ids = []    
-                    for tool in tools:
-                        # Create tool object
-                        tool_obj = stix2.Tool(
-                            id=Tool.generate_id(tool),
-                            name=tool,
-                            labels="orkl-threat-actor-tool",
-                            allow_custom=True,
-                        )
-                        threat_actors_tools_ids.append(tool_obj.id)
-                        result.append(tool_obj)
+                # if tools:
+                #     for tool in tools:
+                #         # Create tool object
+                #         tool_obj = stix2.Tool(
+                #             id=Tool.generate_id(tool),
+                #             name=tool,
+                #             labels="orkl-threat-actor-tool",
+                #             allow_custom=True,
+                #         )
+                #         threat_actors_tools_ids.append(tool_obj.id)
+                #         threat_actors_objects.append(tool_obj)
+                #         result.append(tool_obj)
                         
                             
                 
@@ -241,15 +245,19 @@ class CPEConverter:
                 threat_actor_obj_description += str(threat_actor_aliases) +"\n\n"
                 
                 # create threat actor source object
+                threat_actor_source_objects = []
                 threat_actor_source = stix2.Identity(
                                     id=Identity.generate_id(threat_actor["source_id"], "organization"),
                                     name=threat_actor["source_name"],
                                     created_by_ref=self.author.id,
                                 )
+                threat_actor_source_objects.append(threat_actor_source)
                 result.append(threat_actor_source)
                 
                 # create threat actor object
                 threat_actors_ids = []
+                threat_actor_objects = []
+                threat_actor_relationship_objects = []
                 threat_actor_obj = stix2.ThreatActor(
                     id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
                     name=threat_actor["main_name"],
@@ -257,15 +265,16 @@ class CPEConverter:
                     created=threat_actor["created_at"],
                     modified=threat_actor["updated_at"],
                     labels="ORKL-threat-actor",
-                    object_refs=[source_object.id]+threat_actors_tools_ids,
+                    object_refs=[threat_actor_source.id]+threat_actors_tools_ids,
+                    created_by_ref=threat_actor_source.id,
                     custom_properties={
                         "x_opencti_description": threat_actor_obj_description,
                         "x_opencti_score": 50,
-                        "created_by_ref": threat_actor_source,
                     },
                     allow_custom=True,
                 )
                 result.append(threat_actor_obj)
+                threat_actor_objects.append(threat_actor_obj)
                 threat_actors_ids.append(threat_actor_obj.id)
                 
                 # create relationship between threat actor and tools
@@ -274,11 +283,27 @@ class CPEConverter:
                         relationship = self._create_relationship(threat_actor_obj.id, tool_id, "uses")
                         result.append(relationship)
                         all_relationships_ids.append(relationship.id)
-                        
-                threat_actors_ids.append(threat_actor_obj.id)
+                
+                # create relationship between threat actor and source
+                report_threat_relationship = self._create_relationship(threat_actor_obj.id, threat_actor_source.id, "related-to")
+                
+                threat_actor_relationship_objects.append(report_threat_relationship)
+                result.append(report_threat_relationship)                    
                 
                 
-        # create report object        
+                
+        # create report object
+        report_object_references = []     
+        for threat_actor_source in threat_actor_source_objects:
+            report_object_references.append(threat_actor_source.id)
+         
+        for threat_actor_relationship_object in threat_actor_relationship_objects:
+            report_object_references.append(threat_actor_relationship_object.id)   
+        
+        for threat_actor_object in threat_actor_objects:
+            report_object_references.append(threat_actor_object.id)
+            
+           
         report = stix2.Report(
             id=Report.generate_id(report_name,created_at),
             name=report_name,
@@ -288,8 +313,9 @@ class CPEConverter:
             modified=file_modification_date,
             report_types=["orkl-report"],
             object_marking_refs=event_markings,
-            object_refs=threat_actors_ids+threat_actors_tools_ids+all_relationships_ids,
+            object_refs=report_object_references,
             external_references=external_references,
+            labels="orkl-threat-report",
             confidence=60,
             custom_properties={
                 "x_opencti_report_status": 2,
