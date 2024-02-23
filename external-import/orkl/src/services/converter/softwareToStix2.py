@@ -133,8 +133,6 @@ class CPEConverter:
 
         result = []
 
-        #result.append(self.author)
-
         external_references = []
 
         report = trimmed_list
@@ -186,13 +184,8 @@ class CPEConverter:
                         threat_actors_tools.append(tool_obj)
                         threat_actors_tools_objects.append(tool_obj)
 
-
-
                 threat_actor_aliases = threat_actor["aliases"]
                 threat_actor_obj_description = ""
-                # threat_actor_obj_description = "Aliases are : \n\n"
-                # threat_actor_obj_description += str(threat_actor_aliases) +"\n\n"
-
 
                 # create threat actor source object
                 threat_actor_source_objects = []
@@ -210,7 +203,7 @@ class CPEConverter:
                     description=threat_actor_obj_description,
                     created=threat_actor["created_at"],
                     modified=threat_actor["updated_at"],
-                    labels="ORKL-threat-actor",
+                    labels="orkl-threat-actor",
                     #object_refs=[threat_actor_source.id]+threat_actors_tools_ids,
                     created_by_ref=threat_actor_source.id,
                     custom_properties={
@@ -277,10 +270,10 @@ class CPEConverter:
                 allow_custom=True,
             )
                 report_source_objects.append(source_object)
-            else:
-                pass    
+            
         # create report object
-        report_object_references = [self.author]
+        result.append(source_object)
+        report_object_references = []
         all_elements = (
             threat_actors_tools_objects
             + threat_actor_objects
@@ -295,7 +288,13 @@ class CPEConverter:
             report_object_references.append(relationship)
             result.append(relationship)
         
-
+        
+        for threat_actor_source in threat_actor_source_objects:
+            result.append(relationship)
+        
+        for report_source in report_source_objects:
+            result.append(report_source)
+            
         report = stix2.Report(
             id=Report.generate_id(report_name,created_at),
             name=report_name,
@@ -303,6 +302,7 @@ class CPEConverter:
             published=created_at,
             created=file_creation_date,
             modified=file_modification_date,
+            created_by_ref = source_object.id,
             report_types=["orkl-report"],
             object_marking_refs=event_markings,
             object_refs=report_object_references,
@@ -312,7 +312,6 @@ class CPEConverter:
             custom_properties={
                 "x_opencti_report_status": 2,
                 "x_opencti_files": [],
-                "created_by_ref":source_object.id,
             },
             allow_custom=True,
             )
