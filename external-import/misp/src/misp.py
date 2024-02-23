@@ -384,6 +384,7 @@ class Misp:
                 events = []
                 try:
                     events = self.misp.search("events", **kwargs)
+                    my_temp = json.dumps(events)
                     if isinstance(events, dict):
                         if "errors" in events:
                             raise ValueError(events["message"])

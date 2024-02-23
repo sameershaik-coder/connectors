@@ -1,6 +1,6 @@
 import datetime
 import time
-import stix2 
+import stix2
 from pycti import Identity,StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
 from services.utils import APP_VERSION, ConfigCPE  # type: ignore
 from datetime import datetime
@@ -16,11 +16,11 @@ class CPEConverter:
             helper=self.helper,
             header=f"OpenCTI-cve/{APP_VERSION}",
         )
-    
+
         self.author = self._create_author()
     def add_references():
         pass
-    
+
     def send_bundle(self, cpe_params: dict, work_id: str) -> None:
         """
         Send bundle to API
@@ -28,9 +28,9 @@ class CPEConverter:
         :param work_id: work id in string
         :return:
         """
-        
+
         software_objects = self.softwares_to_stix2(work_id, cpe_params)
-        
+
 
         # if len(software_objects) != 0:
         #     vulnerabilities_bundle = self._to_stix_bundle(software_objects)
@@ -51,7 +51,7 @@ class CPEConverter:
 
         # else:
         #     pass
-    
+
     def softwares_to_stix2(self, work_id, cpe_params: dict) -> list:
         """
         Retrieve all CVEs from NVD to convert into STIX2 format
@@ -100,14 +100,14 @@ class CPEConverter:
                                 work_id=work_id,
                             )
                             print("Sleeping for 600 seconds")
-                            time.sleep(600)
-                            
+                            time.sleep(10)
+
                     # Move the offset
                     offset += limit
-                
+
 
         return results
-    
+
     def check_and_replace_date(self, date_str):
         try:
             # Attempt to parse the date string
@@ -121,24 +121,24 @@ class CPEConverter:
         else:
             # If parsing succeeds, return the original date
             return date_str
-    
+
     def resolve_source_names(self, source_name):
         shortname = source_name
         if ":" in source_name:
             shortname = source_name.split(":")[0]
         return shortname
-    
+
     def process_object(self, object: dict) -> list:
         trimmed_list = object
 
         result = []
 
-        result.append(self.author)
+        #result.append(self.author)
 
         external_references = []
-        
+
         report = trimmed_list
-        
+
         id = report["id"]
         created_at = report["created_at"]
         created_at = self.check_and_replace_date(created_at)
@@ -158,43 +158,105 @@ class CPEConverter:
         references = report["references"]
         report_names = report["report_names"]
         threat_actors = report["threat_actors"]
-        
-        
+
+
         event_markings = []
-        
+
         report_name = report_names[0].split(".")[0]
-        
+
         external_references=[]
         
-        all_relationships_ids = []
-        
+        if len(threat_actors) > 0:
+            threat_actor_objects = []
+            threat_actor_relationship_objects = []
+            threat_actors_tools=[]
+            threat_actors_tools_objects=[]
+            for threat_actor in threat_actors:
+                # create threat actor tools objects
+                tools = threat_actor["tools"]
+                if tools:
+                    for tool in tools:
+                        # Create tool object
+                        tool_obj = stix2.Tool(
+                            id=Tool.generate_id(tool),
+                            name=tool,
+                            labels="orkl-threat-actor-tool",
+                            allow_custom=True,
+                        )
+                        threat_actors_tools.append(tool_obj)
+                        threat_actors_tools_objects.append(tool_obj)
+
+
+
+                threat_actor_aliases = threat_actor["aliases"]
+                threat_actor_obj_description = ""
+                # threat_actor_obj_description = "Aliases are : \n\n"
+                # threat_actor_obj_description += str(threat_actor_aliases) +"\n\n"
+
+
+                # create threat actor source object
+                threat_actor_source_objects = []
+                threat_actor_source = stix2.Identity(
+                                    id=Identity.generate_id(threat_actor["source_id"], "organization"),
+                                    name=threat_actor["source_name"],
+                                    created_by_ref=self.author.id,
+                                )
+                threat_actor_source_objects.append(threat_actor_source)
+
+                # create threat actor object
+                threat_actor_obj = stix2.ThreatActor(
+                    id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
+                    name=threat_actor["main_name"],
+                    description=threat_actor_obj_description,
+                    created=threat_actor["created_at"],
+                    modified=threat_actor["updated_at"],
+                    labels="ORKL-threat-actor",
+                    #object_refs=[threat_actor_source.id]+threat_actors_tools_ids,
+                    created_by_ref=threat_actor_source.id,
+                    custom_properties={
+                        "x_opencti_description": threat_actor_obj_description,
+                        "x_opencti_score": 50,
+                        "x_opencti_aliases": threat_actor_aliases,
+                    },
+                    allow_custom=True,
+                )
+                threat_actor_objects.append(threat_actor_obj)
+
+                # create relationship between threat actor and tools
+                if tools:
+                    for tool in threat_actors_tools[:10]:
+                        relationship = self._create_relationship(threat_actor_obj.id, tool.id, "uses")
+                        threat_actor_relationship_objects.append(relationship)
+                        #result.append(relationship)
+                        #all_relationships_ids.append(relationship.id)
+                
         if "files" in report:
             report_source_name = self.resolve_source_names(sources[0]["name"])
             files=report["files"]
             if "pdf" in files:
                 external_reference = stix2.ExternalReference(
-                    source_name=report_source_name+"Report PDF",  url=files["pdf"]
+                    source_name=report_source_name+" Report PDF",  url=files["pdf"]
                 )
                 external_references.append(external_reference)
             if "text" in files:
                 external_reference = stix2.ExternalReference(
-                    source_name=report_source_name+"Report TEXT",  url=files["text"]
+                    source_name=report_source_name+" Report TEXT",  url=files["text"]
                 )
                 external_references.append(external_reference)
             if "img" in files:
                 external_reference = stix2.ExternalReference(
-                    source_name=report_source_name+"Report IMAGE",  url=files["img"]
+                    source_name=report_source_name+" Report IMAGE",  url=files["img"]
                 )
                 external_references.append(external_reference)
-        
+
         if len(references) > 0:
-            
+
             external_reference = stix2.ExternalReference(
-                source_name=report_source_name + "Report source",  url=references[0]
+                source_name=report_source_name + " Report source",  url=references[0]
             )
             external_references.append(external_reference)
-            
-        source_objects=[]
+
+        report_source_objects=[]
         if len(sources) > 0:
             custom_properties = {
                     "x_opencti_description": sources[0]["description"],
@@ -203,7 +265,7 @@ class CPEConverter:
                     "created_by_ref": self.author.id,
                     "external_references": [],
                 }
-            
+
             if sources[0]["name"] != None:
                 report_source_name = self.resolve_source_names(sources[0]["name"])
                 source_object = stix2.Identity(
@@ -214,96 +276,26 @@ class CPEConverter:
                 custom_properties=custom_properties,
                 allow_custom=True,
             )
-                result.append(source_object)
+                report_source_objects.append(source_object)
             else:
-                pass
-            
-        
-        if len(threat_actors) > 0:
-            threat_actors_ids = []
-            threat_actors_tools_ids = []    
-            for threat_actor in threat_actors:
-                # create threat actor tools objects
-                tools = threat_actor["tools"]
-                # if tools:
-                #     for tool in tools:
-                #         # Create tool object
-                #         tool_obj = stix2.Tool(
-                #             id=Tool.generate_id(tool),
-                #             name=tool,
-                #             labels="orkl-threat-actor-tool",
-                #             allow_custom=True,
-                #         )
-                #         threat_actors_tools_ids.append(tool_obj.id)
-                #         threat_actors_objects.append(tool_obj)
-                #         result.append(tool_obj)
-                        
-                            
-                
-                threat_actor_aliases = threat_actor["aliases"]
-                threat_actor_obj_description = "Aliases are : \n\n"
-                threat_actor_obj_description += str(threat_actor_aliases) +"\n\n"
-                
-                # create threat actor source object
-                threat_actor_source_objects = []
-                threat_actor_source = stix2.Identity(
-                                    id=Identity.generate_id(threat_actor["source_id"], "organization"),
-                                    name=threat_actor["source_name"],
-                                    created_by_ref=self.author.id,
-                                )
-                threat_actor_source_objects.append(threat_actor_source)
-                result.append(threat_actor_source)
-                
-                # create threat actor object
-                threat_actors_ids = []
-                threat_actor_objects = []
-                threat_actor_relationship_objects = []
-                threat_actor_obj = stix2.ThreatActor(
-                    id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
-                    name=threat_actor["main_name"],
-                    description=threat_actor_obj_description,
-                    created=threat_actor["created_at"],
-                    modified=threat_actor["updated_at"],
-                    labels="ORKL-threat-actor",
-                    object_refs=[threat_actor_source.id]+threat_actors_tools_ids,
-                    created_by_ref=threat_actor_source.id,
-                    custom_properties={
-                        "x_opencti_description": threat_actor_obj_description,
-                        "x_opencti_score": 50,
-                    },
-                    allow_custom=True,
-                )
-                result.append(threat_actor_obj)
-                threat_actor_objects.append(threat_actor_obj)
-                threat_actors_ids.append(threat_actor_obj.id)
-                
-                # create relationship between threat actor and tools
-                if tools:
-                    for tool_id in threat_actors_tools_ids:
-                        relationship = self._create_relationship(threat_actor_obj.id, tool_id, "uses")
-                        result.append(relationship)
-                        all_relationships_ids.append(relationship.id)
-                
-                # create relationship between threat actor and source
-                report_threat_relationship = self._create_relationship(threat_actor_obj.id, threat_actor_source.id, "related-to")
-                
-                threat_actor_relationship_objects.append(report_threat_relationship)
-                result.append(report_threat_relationship)                    
-                
-                
-                
+                pass    
         # create report object
-        report_object_references = []     
-        for threat_actor_source in threat_actor_source_objects:
-            report_object_references.append(threat_actor_source.id)
-         
-        for threat_actor_relationship_object in threat_actor_relationship_objects:
-            report_object_references.append(threat_actor_relationship_object.id)   
+        report_object_references = [self.author]
+        all_elements = (
+            threat_actors_tools_objects
+            + threat_actor_objects
+        )
+
+        for element in all_elements:
+            report_object_references.append(element)
+            result.append(element) 
+
         
-        for threat_actor_object in threat_actor_objects:
-            report_object_references.append(threat_actor_object.id)
-            
-           
+        for relationship in threat_actor_relationship_objects:
+            report_object_references.append(relationship)
+            result.append(relationship)
+        
+
         report = stix2.Report(
             id=Report.generate_id(report_name,created_at),
             name=report_name,
@@ -324,21 +316,9 @@ class CPEConverter:
             },
             allow_custom=True,
             )
-        
+
         result.append(report)
-        
-        # create relationship between report and source
-        for source_object in source_objects:
-            relationship = self._create_relationship(report.id, source_object.id, "related-to")                
-            result.append(relationship)
-            all_relationships_ids.append(relationship.id)
-        
-        # create relationship between report and threat actors
-        for threat_actor_id in threat_actors_ids:
-            relationship = self._create_relationship(report.id, threat_actor_id, "related-to")                
-            result.append(relationship)    
-            all_relationships_ids.append(relationship.id)
-            
+
         return result
 
     def _create_relationship(self, from_id: str, to_id: str, relation):
