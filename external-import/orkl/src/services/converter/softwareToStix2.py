@@ -167,7 +167,7 @@ class CPEConverter:
         if len(threat_actors) > 0:
             threat_actor_objects = []
             threat_actor_relationship_objects = []
-            #threat_actors_tools=[]
+            threat_actor_source_objects = []
             threat_actors_tools_objects=[]
             for threat_actor in threat_actors:
                 # create threat actor tools objects
@@ -188,10 +188,11 @@ class CPEConverter:
                 threat_actor_obj_description = ""
 
                 # create threat actor source object
-                threat_actor_source_objects = []
+                
+                threat_actor_source_name = self.resolve_source_names(threat_actor["source_name"])
                 threat_actor_source = stix2.Identity(
-                                    id=Identity.generate_id(threat_actor["source_id"], "organization"),
-                                    name=threat_actor["source_name"],
+                                    id=Identity.generate_id(threat_actor_source_name, "organization"),
+                                    name=threat_actor_source_name,
                                     created_by_ref=self.author.id,
                                 )
                 threat_actor_source_objects.append(threat_actor_source)
@@ -272,7 +273,7 @@ class CPEConverter:
                 report_source_objects.append(source_object)
             
         # create report object
-        result.append(source_object)
+        #result.append(source_object)
         report_object_references = []
         all_elements = (
             threat_actors_tools_objects
@@ -290,7 +291,7 @@ class CPEConverter:
         
         
         for threat_actor_source in threat_actor_source_objects:
-            result.append(relationship)
+            result.append(threat_actor_source)
         
         for report_source in report_source_objects:
             result.append(report_source)
