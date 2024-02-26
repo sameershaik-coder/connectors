@@ -167,7 +167,7 @@ class CPEConverter:
         if len(threat_actors) > 0:
             threat_actor_objects = []
             threat_actor_relationship_objects = []
-            threat_actors_tools=[]
+            #threat_actors_tools=[]
             threat_actors_tools_objects=[]
             for threat_actor in threat_actors:
                 # create threat actor tools objects
@@ -181,7 +181,7 @@ class CPEConverter:
                             labels="orkl-threat-actor-tool",
                             allow_custom=True,
                         )
-                        threat_actors_tools.append(tool_obj)
+                        #threat_actors_tools.append(tool_obj)
                         threat_actors_tools_objects.append(tool_obj)
 
                 threat_actor_aliases = threat_actor["aliases"]
@@ -217,7 +217,7 @@ class CPEConverter:
 
                 # create relationship between threat actor and tools
                 if tools:
-                    for tool in threat_actors_tools[:10]:
+                    for tool in threat_actors_tools_objects[:10]:
                         relationship = self._create_relationship(threat_actor_obj.id, tool.id, "uses")
                         threat_actor_relationship_objects.append(relationship)
                         #result.append(relationship)
