@@ -1,1 +1,1 @@
-from .softwareToStix2 import CPEConverter  # noqa: F401
+from .reportToStix2 import CPEConverter  # noqa: F401
