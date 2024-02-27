@@ -29,7 +29,7 @@ class CPEConverter:
         :return:
         """
 
-        software_objects = self.softwares_to_stix2(work_id, cpe_params)
+        report_objects = self.reports_to_stix2(work_id, cpe_params)
 
 
         # if len(software_objects) != 0:
@@ -52,9 +52,9 @@ class CPEConverter:
         # else:
         #     pass
 
-    def softwares_to_stix2(self, work_id, cpe_params: dict) -> list:
+    def reports_to_stix2(self, work_id, cpe_params: dict) -> list:
         """
-        Retrieve all CVEs from NVD to convert into STIX2 format
+        Retrieve all reports from orkl to convert into STIX2 format
         :param cpe_params: Dict of params
         :return: List of data converted into STIX2
         """
@@ -70,18 +70,7 @@ class CPEConverter:
                 else:
                     # Process and store data in chunks of 100
                     for i in range(0, len(reports_collection), 1):
-                        # check if report already exists in the opencti
-                        # report_name = reports_collection[i]["report_names"][0].split(".")[0]
-                        # reports = self.helper.api.stix_domain_object.list(
-                        #             types=["Reports"],
-                        #             filters={
-                        #                 "mode": "and",
-                        #                 "filters": [{"key": "name", "values": [report_name]}],
-                        #                 "filterGroups": [],
-                        #             },
-                        #         )
-                        # if len(reports) > 0:
-                        #     print(f"Report {report_name} already exists in the opencti")
+                        
                         processed_object = self.process_object(reports_collection[i])
                         if len(processed_object) != 0:
                             vulnerabilities_bundle = self._to_stix_bundle(processed_object)
@@ -90,7 +79,7 @@ class CPEConverter:
                             # Retrieve the author object for the info message
                             info_msg = (
                                 f"[CONVERTER] Sending bundle to server with {len(vulnerabilities_bundle)} objects, "
-                                f"concerning {len(processed_object) - 1} vulnerabilities"
+                                f"concerning {len(processed_object) - 1} reports"
                             )
                             self.helper.log_info(info_msg)
 
@@ -339,7 +328,7 @@ class CPEConverter:
     @staticmethod
     def _create_author():
         """
-        :return: CVEs' default author
+        :return: ORKL as default author
         """
         return stix2.Identity(
             id=Identity.generate_id("ORKL", "organization"),
