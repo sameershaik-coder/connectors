@@ -4,14 +4,14 @@ import stix2
 from pycti import Identity,StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
 from services.utils import APP_VERSION, ConfigCPE  # type: ignore
 from datetime import datetime
-from ..client import CPESoftware  # type: ignore
+from ..client import Report  # type: ignore
 from stix2 import v21
 
 class CPEConverter:
     def __init__(self, helper):
         self.config = ConfigCPE()
         self.helper = helper
-        self.client_api = CPESoftware(
+        self.client_api = Report(
             api_key=self.config.api_key,
             helper=self.helper,
             header=f"OpenCTI-cve/{APP_VERSION}",
