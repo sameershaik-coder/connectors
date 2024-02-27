@@ -7,14 +7,13 @@ from urllib3.util import Retry
 from .endpoints import BASE_URL
 
 
-class CPEClient:
+class ORKLAPIClient:
     """
     Working with CPE API
     """
-
     def __init__(self, api_key, helper, header):
         """
-        Initialize CPE API with necessary configurations
+        Initialize ORKL API with necessary configurations
         :param api_key: API key in string
         :param helper: OCTI helper
         :param header:
@@ -71,19 +70,19 @@ class CPEClient:
     
     def get_orkl_latest_version(self):
         response = self._request_data(self, BASE_URL+"/version")
-        cpe_collection = response.json()
-        return cpe_collection
+        reports_collection = response.json()
+        return reports_collection
     
     def get_report_by_id(self, id):
         response = self._request_data(self, BASE_URL+'/entry/'+id)
-        cpe_collection = response.json()
-        return cpe_collection
+        reports_collection = response.json()
+        return reports_collection
     
-    def get_some_orkl_collection(self,limit,offset, cpe_params=None):
+    def get_some_orkl_collection(self,limit,offset, api_params=None):
         """
-        If params is None, retrieve all CPEs in National Vulnerability Database
-        :param cpe_params: Params to filter what list to return
-        :return: A list of dicts of the complete collection of CPE from NVD
+        If params is None, retrieve all reports from orkl
+        :param api_params: Params to filter what list to return
+        :return: A list of dicts of the complete collection of ORKL
         """
         try:
             params={
@@ -103,17 +102,17 @@ class CPEClient:
         except Exception as err:
             self.helper.log_error(err)
 
-    def get_complete_collection(self, cpe_params=None):
+    def get_complete_collection(self, api_params=None):
         """
-        If params is None, retrieve all CPEs in National Vulnerability Database
-        :param cpe_params: Params to filter what list to return
-        :return: A list of dicts of the complete collection of CPE from NVD
+        If params is None, retrieve all reports from ORKL
+        :param api_params: Params to filter what list to return
+        :return: A list of dicts of the complete collection of reports from ORKL
         """
         try:
-            response = self._request_data(self, BASE_URL, params=cpe_params)
+            response = self._request_data(self, BASE_URL, params=api_params)
 
-            cpe_collection = response.json()
-            return cpe_collection
+            reports_collection = response.json()
+            return reports_collection
 
         except Exception as err:
             self.helper.log_error(err)

@@ -1,9 +1,9 @@
-from .api import CPEClient
+from .api import ORKLAPIClient
 import json
 from services.utils.configVariables import ConfigCPE
 import os
 
-class ReportClient(CPEClient):
+class ReportClient(ORKLAPIClient):
     
     def get_version_sync_done(self):
         root_dir = os.path.dirname(os.path.abspath(__file__))
