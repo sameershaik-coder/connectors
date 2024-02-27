@@ -3,7 +3,7 @@ import json
 from services.utils.configVariables import ConfigCPE
 import os
 
-class Report(CPEClient):
+class ReportClient(CPEClient):
     
     def get_version_sync_done(self):
         root_dir = os.path.dirname(os.path.abspath(__file__))

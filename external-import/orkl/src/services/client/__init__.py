@@ -1,2 +1,2 @@
 from .api import CPEClient  # noqa: F401
-from .vulnerability import Report  # noqa: F401
+from .report import ReportClient  # noqa: F401
