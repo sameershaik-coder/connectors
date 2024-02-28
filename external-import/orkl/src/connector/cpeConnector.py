@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from pycti import OpenCTIConnectorHelper  # type: ignore
 from services import CPEConverter  # type: ignore
-from services.utils import MAX_AUTHORIZED, ConfigCPE  # type: ignore
+from services.utils import MAX_AUTHORIZED, ConfigOrkl  # type: ignore
 
 
 class CPEConnector:
@@ -14,7 +14,7 @@ class CPEConnector:
         """
 
         # Load configuration file and connection helper
-        self.config = ConfigCPE()
+        self.config = ConfigOrkl()
         self.helper = OpenCTIConnectorHelper(self.config.load)
         self.converter = CPEConverter(self.helper)
 

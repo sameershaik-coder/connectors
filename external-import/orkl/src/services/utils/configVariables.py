@@ -7,10 +7,10 @@ from .common import convert_hours_to_seconds
 from .constants import CONFIG_FILE_PATH
 
 
-class ConfigCPE:
+class ConfigOrkl:
     def __init__(self):
         """
-        Initialize the CVEConnector with necessary configurations
+        Initialize the ORKL Connector with necessary configurations
         """
 
         # Load configuration file and connection helper
@@ -44,26 +44,26 @@ class ConfigCPE:
         )
 
         self.base_url = get_config_variable(
-            "CVE_BASE_URL",
-            ["cve", "base_url"],
+            "ORKL_BASE_URL",
+            ["orkl", "base_url"],
             self.load,
         )
 
         self.api_key = get_config_variable(
-            "CVE_API_KEY",
-            ["cve", "api_key"],
+            "ORKL_API_KEY",
+            ["orkl", "api_key"],
             self.load,
         )
         
         self.orkl_sync_from_version = get_config_variable(
             "ORKL_SYNC_FROM_VERSION",
-            ["cve", "orkl_sync_from_version"],
+            ["orkl", "orkl_sync_from_version"],
             self.load,
         )
 
         self.config_interval = get_config_variable(
-            "CVE_INTERVAL",
-            ["cve", "interval"],
+            "ORKL_INTERVAL",
+            ["orkl", "interval"],
             self.load,
             isNumber=True,
         )
@@ -71,20 +71,20 @@ class ConfigCPE:
         self.interval = convert_hours_to_seconds(self.config_interval)
 
         self.max_date_range = get_config_variable(
-            "CVE_MAX_DATE_RANGE", ["cve", "max_date_range"], self.load, isNumber=True
+            "ORKL_MAX_DATE_RANGE", ["orkl", "max_date_range"], self.load, isNumber=True
         )
 
         self.maintain_data = get_config_variable(
-            "CVE_MAINTAIN_DATA", ["cve", "maintain_data"], self.load
+            "ORKL_MAINTAIN_DATA", ["orkl", "maintain_data"], self.load
         )
 
         self.pull_history = get_config_variable(
-            "CVE_PULL_HISTORY", ["cve", "pull_history"], self.load
+            "ORKL_PULL_HISTORY", ["orkl", "pull_history"], self.load
         )
 
         self.history_start_year = get_config_variable(
-            "CVE_HISTORY_START_YEAR",
-            ["cve", "history_start_year"],
+            "ORKL_HISTORY_START_YEAR",
+            ["orkl", "history_start_year"],
             self.load,
             isNumber=True,
         )

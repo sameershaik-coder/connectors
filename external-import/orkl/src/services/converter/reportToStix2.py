@@ -2,14 +2,14 @@ import datetime
 import time
 import stix2
 from pycti import Identity,StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
-from services.utils import APP_VERSION, ConfigCPE  # type: ignore
+from services.utils import APP_VERSION, ConfigOrkl  # type: ignore
 from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore
 from stix2 import v21
 
 class CPEConverter:
     def __init__(self, helper):
-        self.config = ConfigCPE()
+        self.config = ConfigOrkl()
         self.helper = helper
         self.client_api = ReportClient(
             api_key=self.config.api_key,

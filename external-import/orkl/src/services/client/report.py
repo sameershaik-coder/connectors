@@ -1,6 +1,6 @@
 from .api import ORKLAPIClient
 import json
-from services.utils.configVariables import ConfigCPE
+from services.utils.configVariables import ConfigOrkl
 import os
 
 class ReportClient(ORKLAPIClient):
@@ -62,7 +62,7 @@ class ReportClient(ORKLAPIClient):
         """
         reports_collection = None
         error=False
-        config = ConfigCPE()
+        config = ConfigOrkl()
         SYNC_FROM_VERSION = int(config.orkl_sync_from_version)
         latest_version = self.get_latest_orkl_version()
         version_sync_done = self.get_version_sync_done()  

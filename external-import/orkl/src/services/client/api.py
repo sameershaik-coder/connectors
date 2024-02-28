@@ -9,7 +9,7 @@ from .endpoints import BASE_URL
 
 class ORKLAPIClient:
     """
-    Working with CPE API
+    Working with ORKL API
     """
     def __init__(self, api_key, helper, header):
         """
@@ -90,14 +90,9 @@ class ORKLAPIClient:
                 "offset": offset,
                 "order": "desc"
             }
-            # params={
-            #     "order": "desc"
-            # }
             response = self._request_data(self, BASE_URL+'/version/entries', params=params)
-            #response = self._request_data(self, BASE_URL, params=cpe_params)
-            #print(response.text)
-            cpe_collection = response.json()
-            return cpe_collection
+            reports_collection = response.json()
+            return reports_collection
 
         except Exception as err:
             self.helper.log_error(err)
