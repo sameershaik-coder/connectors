@@ -3,7 +3,7 @@ import time
 from datetime import datetime, timedelta
 
 from pycti import OpenCTIConnectorHelper  # type: ignore
-from services import CPEConverter  # type: ignore
+from services import OrklConverter  # type: ignore
 from services.utils import MAX_AUTHORIZED, ConfigOrkl  # type: ignore
 
 
@@ -16,7 +16,7 @@ class CPEConnector:
         # Load configuration file and connection helper
         self.config = ConfigOrkl()
         self.helper = OpenCTIConnectorHelper(self.config.load)
-        self.converter = CPEConverter(self.helper)
+        self.converter = OrklConverter(self.helper)
 
     def run(self) -> None:
         """

@@ -1,1 +1,1 @@
-from .reportToStix2 import CPEConverter  # noqa: F401
+from .reportToStix2 import OrklConverter  # noqa: F401

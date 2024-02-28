@@ -7,29 +7,29 @@ from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore
 from stix2 import v21
 
-class CPEConverter:
+class OrklConverter:
     def __init__(self, helper):
         self.config = ConfigOrkl()
         self.helper = helper
         self.client_api = ReportClient(
             api_key=self.config.api_key,
             helper=self.helper,
-            header=f"OpenCTI-cve/{APP_VERSION}",
+            header=f"OpenCTI-orkl/{APP_VERSION}",
         )
 
         self.author = self._create_author()
     def add_references():
         pass
 
-    def send_bundle(self, cpe_params: dict, work_id: str) -> None:
+    def send_bundle(self, orkl_params: dict, work_id: str) -> None:
         """
         Send bundle to API
-        :param cpe_params: Dict of params
+        :param orkl_params: Dict of params
         :param work_id: work id in string
         :return:
         """
 
-        report_objects = self.reports_to_stix2(work_id, cpe_params)
+        report_objects = self.reports_to_stix2(work_id, orkl_params)
 
 
         # if len(software_objects) != 0:
@@ -52,16 +52,16 @@ class CPEConverter:
         # else:
         #     pass
 
-    def reports_to_stix2(self, work_id, cpe_params: dict) -> list:
+    def reports_to_stix2(self, work_id, orkl_params: dict) -> list:
         """
         Retrieve all reports from orkl to convert into STIX2 format
-        :param cpe_params: Dict of params
+        :param orkl_params: Dict of params
         :return: List of data converted into STIX2
         """
         offset=0
         limit=100
         while True:
-            reports_collection = self.client_api.get_reports(limit,offset,cpe_params)
+            reports_collection = self.client_api.get_reports(limit,offset,orkl_params)
 
             if reports_collection is not None:
                 results=[]
