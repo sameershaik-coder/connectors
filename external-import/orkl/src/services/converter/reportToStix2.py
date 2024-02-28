@@ -5,7 +5,7 @@ from pycti import Identity,StixCoreRelationship, Report, CustomObservableText,Th
 from services.utils import APP_VERSION, ConfigOrkl  # type: ignore
 from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore
-from stix2 import v21
+import os, json
 
 class OrklConverter:
     def __init__(self, helper):
@@ -73,29 +73,40 @@ class OrklConverter:
                         
                         processed_object = self.process_object(reports_collection[i])
                         if len(processed_object) != 0:
-                            vulnerabilities_bundle = self._to_stix_bundle(processed_object)
-                            vulnerabilities_to_json = self._to_json_bundle(vulnerabilities_bundle)
+                            reports_bundle = self._to_stix_bundle(processed_object)
+                            reports_to_json = self._to_json_bundle(reports_bundle)
 
                             # Retrieve the author object for the info message
                             info_msg = (
-                                f"[CONVERTER] Sending bundle to server with {len(vulnerabilities_bundle)} objects, "
+                                f"[CONVERTER] Sending bundle to server with {len(reports_bundle)} objects, "
                                 f"concerning {len(processed_object) - 1} reports"
                             )
                             self.helper.log_info(info_msg)
 
                             self.helper.send_stix2_bundle(
-                                vulnerabilities_to_json,
+                                reports_to_json,
                                 update=self.config.update_existing_data,
                                 work_id=work_id,
                             )
                             print("Sleeping for 600 seconds")
-                            time.sleep(10)
+                            self.update_version_sync_done(201)
+                            time.sleep(300)
 
                     # Move the offset
                     offset += limit
 
 
         return results
+
+    def update_version_sync_done(self, version):
+        current_dir  = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(current_dir)
+        file_path = "client/sync_details.json"
+        file_path = os.path.join(parent_dir, file_path)
+        result = {}
+        result["version_sync_done"] = int(version)
+        with open(file_path, "w") as outfile:
+            json.dump(result, outfile)
 
     def check_and_replace_date(self, date_str):
         try:
@@ -262,7 +273,6 @@ class OrklConverter:
                 report_source_objects.append(source_object)
             
         # create report object
-        #result.append(source_object)
         report_object_references = []
         all_elements = (
             threat_actors_tools_objects
