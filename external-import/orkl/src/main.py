@@ -2,14 +2,14 @@
 
 import time
 
-from connector import CPEConnector
+from connector import OrklConnector
 
 if __name__ == "__main__":
     """
     Entry point of the script5
     """
     try:
-        connector = CPEConnector()
+        connector = OrklConnector()
         connector.run()
     except Exception as err:
         print(err)

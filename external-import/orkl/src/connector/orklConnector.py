@@ -7,10 +7,10 @@ from services import OrklConverter  # type: ignore
 from services.utils import MAX_AUTHORIZED, ConfigOrkl  # type: ignore
 
 
-class CPEConnector:
+class OrklConnector:
     def __init__(self):
         """
-        Initialize the CVEConnector with necessary configurations
+        Initialize the orklConnector with necessary configurations
         """
 
         # Load configuration file and connection helper
@@ -20,7 +20,7 @@ class CPEConnector:
 
     def run(self) -> None:
         """
-        Main execution loop procedure for CVE connector
+        Main execution loop procedure for orkl connector
         """
         self.helper.log_info("[CONNECTOR] Fetching datasets...")
         get_run_and_terminate = getattr(self.helper, "get_run_and_terminate", None)
@@ -74,7 +74,7 @@ class CPEConnector:
 
     def _import_recent(self, now: datetime, work_id: str) -> None:
         """
-        Import the most recent CVEs depending on date range chosen
+        Import the most recent orkls depending on date range chosen
         :param now: Current date in datetime
         :param work_id: Work id in string
         """
@@ -87,15 +87,15 @@ class CPEConnector:
         date_range = timedelta(days=self.config.max_date_range)
         start_date = now - date_range
 
-        cve_params = self._update_cpe_params(start_date, now)
+        orkl_params = self._update_orkl_params(start_date, now)
 
-        self.converter.send_bundle(cve_params, work_id)
+        self.converter.send_bundle(orkl_params, work_id)
 
     def _import_history(
         self, start_date: datetime, end_date: datetime, work_id: str
     ) -> None:
         """
-        Import CVEs history if pull_history config is True
+        Import orkls history if pull_history config is True
         :param start_date: Start date in datetime
         :param end_date: End date in datetime
         :param work_id: Work id in string
@@ -122,25 +122,25 @@ class CPEConnector:
                     days=MAX_AUTHORIZED
                 )
                 info_msg = (
-                    f"[CONNECTOR] Connector retrieve CVE history for year {year}, "
+                    f"[CONNECTOR] Connector retrieve orkl history for year {year}, "
                     f"{days_in_year} days left"
                 )
                 self.helper.log_info(info_msg)
 
                 """
                 If retrieve history for this year and days_in_year left are less than 120 days
-                Retrieve CVEs from the rest of days                         
+                Retrieve orkls from the rest of days                         
                 """
                 if year == end_date.year and days_in_year < MAX_AUTHORIZED:
                     end_date_current_year = start_date_current_year + timedelta(
                         days=days_in_year
                     )
                     # Update date range
-                    cve_params = self._update_cpe_params(
+                    orkl_params = self._update_orkl_params(
                         start_date_current_year, end_date_current_year
                     )
 
-                    self.converter.send_bundle(cve_params, work_id)
+                    self.converter.send_bundle(orkl_params, work_id)
                     days_in_year = 0
 
                 """
@@ -149,11 +149,11 @@ class CPEConnector:
                 """
                 if days_in_year > 6:
                     # Update date range
-                    cve_params = self._update_cpe_params(
+                    orkl_params = self._update_orkl_params(
                         start_date_current_year, end_date_current_year
                     )
 
-                    self.converter.send_bundle(cve_params, work_id)
+                    self.converter.send_bundle(orkl_params, work_id)
                     start_date_current_year += timedelta(days=MAX_AUTHORIZED)
                     days_in_year -= MAX_AUTHORIZED
                 else:
@@ -161,13 +161,13 @@ class CPEConnector:
                         days=days_in_year
                     )
                     # Update date range
-                    cve_params = self._update_cpe_params(
+                    orkl_params = self._update_orkl_params(
                         start_date_current_year, end_date_current_year
                     )
-                    self.converter.send_bundle(cve_params, work_id)
+                    self.converter.send_bundle(orkl_params, work_id)
                     days_in_year = 0
 
-            info_msg = f"[CONNECTOR] Importing CVE history for year {year} finished"
+            info_msg = f"[CONNECTOR] Importing orkl history for year {year} finished"
             self.helper.log_info(info_msg)
 
     def _maintain_data(self, now: datetime, last_run: float, work_id: str) -> None:
@@ -177,21 +177,21 @@ class CPEConnector:
         :param last_run: Last run date in float
         :param work_id: Work id in str
         """
-        self.helper.log_info("[CONNECTOR] Getting the last CVEs since the last run...")
+        self.helper.log_info("[CONNECTOR] Getting the last orkls since the last run...")
 
         last_run_ts = datetime.utcfromtimestamp(last_run)
 
         # Update date range
-        cpe_params = self._update_cpe_params(last_run_ts, now)
-        self.converter.send_bundle(cpe_params, work_id)
+        orkl_params = self._update_orkl_params(last_run_ts, now)
+        self.converter.send_bundle(orkl_params, work_id)
 
     @staticmethod
-    def _update_cpe_params(start_date: datetime, end_date: datetime) -> dict:
+    def _update_orkl_params(start_date: datetime, end_date: datetime) -> dict:
         """
-        Update CVE params to handle date range
+        Update orkl params to handle date range
         :param start_date: Start date in datetime
         :param end_date: End date in datetime
-        :return: Dict of CVE params
+        :return: Dict of orkl params
         """
         return {
             "lastModStartDate": start_date.isoformat(),
@@ -239,7 +239,7 @@ class CPEConnector:
 
             """
             ================================================================
-            If the connector never runs, import the most recent CVEs
+            If the connector never runs, import the most recent orkls
             from the last max_date_range (can be configured) to now
             ================================================================
             """
@@ -248,7 +248,7 @@ class CPEConnector:
                 work_id = self._initiate_work(current_time)
                 """
                 =================================================================
-                If the connector never runs and user wants to pull CVE history
+                If the connector never runs and user wants to pull orkl history
                 =================================================================
                 """
                 if self.config.pull_history:
@@ -262,7 +262,7 @@ class CPEConnector:
 
                 """
                 ===================================================================
-                Import CVEs from the last run to now if maintain data is True
+                Import orkls from the last run to now if maintain data is True
                 If the connector runs, and last run is more than current interval
                 ===================================================================
                 """

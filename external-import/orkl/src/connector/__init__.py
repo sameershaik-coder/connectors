@@ -1,2 +1,2 @@
 # Import modules to init
-from .cpeConnector import CPEConnector  # noqa: F401
+from .orklConnector import OrklConnector  # noqa: F401
