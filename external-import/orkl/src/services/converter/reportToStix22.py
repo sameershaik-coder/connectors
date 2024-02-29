@@ -51,56 +51,6 @@ class OrklConverter:
 
         # else:
         #     pass
-    
-    def get_version_sync_done(self):
-        root_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = "sync_details.json"
-        file_path = os.path.join(root_dir, file_path)
-        with open(file_path, 'r') as json_file:
-        # Load the JSON data from the file
-            return json.load(json_file)["version_sync_done"]
-    
-    def get_latest_orkl_version(self):
-        return int(self.client_api.get_orkl_latest_version()["data"]["ID"])
-    
-    def get_entries_from_version_id(self,from_version_id) -> list:
-        id_exists = False
-        limit = 100
-        offset = 0
-        result=[]
-        while(id_exists == False):
-            all_entries = self.client_api.get_some_orkl_collection(limit,offset)["data"]["entries"]
-            id_exists = self.check_version_id_exists(from_version_id,all_entries)
-            if id_exists:
-                filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]
-                result+=filtered_entries
-                self.current_orkl_entries=result
-                return result
-            else:
-                result+=all_entries
-                offset += limit
-                id_exists=False
-            
-    
-    def check_version_id_exists(self,id, entries) -> bool:
-        return [entry for entry in entries if entry.get('ID') == id]
-    
-    def process_entries(self, entries) -> list:
-        result = []
-        for entry in entries:
-            reports = entry.get("created_library_entries")
-            if reports:
-                result+=self.process_reports(reports)
-        
-        return result        
-                
-    def process_reports(self, reports) -> list:
-        result = []
-        for report in reports:
-            report_data = self.client_api.get_report_by_id(report)["data"]
-            result.append(report_data)
-            print(report_data)
-        return result
 
     def reports_to_stix2(self, work_id, orkl_params: dict) -> list:
         """
@@ -108,72 +58,51 @@ class OrklConverter:
         :param orkl_params: Dict of params
         :return: List of data converted into STIX2
         """
-        results=[]
-        config = ConfigOrkl()
-        SYNC_FROM_VERSION = int(config.orkl_sync_from_version)
-        latest_version = self.get_latest_orkl_version()
-        version_sync_done = self.get_version_sync_done()  
-        if latest_version >= SYNC_FROM_VERSION:
-            if version_sync_done >= SYNC_FROM_VERSION:
-                all_entries = self.get_entries_from_version_id(version_sync_done)
-                sorted_entries = sorted(all_entries, key=lambda x: x["ID"])
-                for entry in sorted_entries:
-                    current_entry_reports=[]
-                    reports = entry.get("created_library_entries")
-                    if reports:
-                        current_entry_reports+=self.process_reports(reports)
-                        if current_entry_reports is not None:
-                            if(len(current_entry_reports) == 0):
-                                break
-                            else:
-                                # Process and store data in chunks of 100
-                                for i in range(0, len(current_entry_reports), 1):
-                                    
-                                    processed_object = self.process_object(current_entry_reports[i])
-                                    if len(processed_object) != 0:
-                                        reports_bundle = self._to_stix_bundle(processed_object)
-                                        reports_to_json = self._to_json_bundle(reports_bundle)
+        offset=0
+        limit=100
+        while True:
+            reports_collection = self.client_api.get_reports(limit,offset,orkl_params)
 
-                                        # Retrieve the author object for the info message
-                                        info_msg = (
-                                            f"[CONVERTER] Sending bundle to server with {len(reports_bundle)} objects, "
-                                            f"concerning {len(processed_object) - 1} reports"
-                                        )
-                                        self.helper.log_info(info_msg)
-
-                                        self.helper.send_stix2_bundle(
-                                            reports_to_json,
-                                            update=self.config.update_existing_data,
-                                            work_id=work_id,
-                                        )
-                                        print("Sleeping for 600 seconds")
-                                        time.sleep(10)
-                                entry_id=entry["ID"]
-                                self.update_version_sync_done(entry_id)
-                        else:
-                            raise Exception(
-                                "Attempting to retrieve data failed. " "Wait for connector to re-run..."
-                            )
-            else:
-                msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
-                self.helper.log_info(msg)
-        else:
-            if SYNC_FROM_VERSION > latest_version:
-                raise Exception(f"Version does not exist, check orkl_sync_from_version in config file. Latest version is {latest_version} and sync from version is {SYNC_FROM_VERSION}")
-            else:
-                if latest_version==SYNC_FROM_VERSION and version_sync_done==SYNC_FROM_VERSION:
-                    msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
-                    self.helper.log_info(msg)
+            if reports_collection is not None:
+                results=[]
+                if(len(reports_collection) == 0):
+                    break
                 else:
-                    raise Exception(f"Unable to perform sync from version {SYNC_FROM_VERSION} to latest version {latest_version}. Please check the config file.")        
-        
-        
+                    # Process and store data in chunks of 100
+                    for i in range(0, len(reports_collection), 1):
+                        
+                        processed_object = self.process_object(reports_collection[i])
+                        if len(processed_object) != 0:
+                            reports_bundle = self._to_stix_bundle(processed_object)
+                            reports_to_json = self._to_json_bundle(reports_bundle)
+
+                            # Retrieve the author object for the info message
+                            info_msg = (
+                                f"[CONVERTER] Sending bundle to server with {len(reports_bundle)} objects, "
+                                f"concerning {len(processed_object) - 1} reports"
+                            )
+                            self.helper.log_info(info_msg)
+
+                            self.helper.send_stix2_bundle(
+                                reports_to_json,
+                                update=self.config.update_existing_data,
+                                work_id=work_id,
+                            )
+                            print("Sleeping for 600 seconds")
+                            self.update_version_sync_done(201)
+                            time.sleep(300)
+
+                    # Move the offset
+                    offset += limit
+
+
         return results
 
     def update_version_sync_done(self, version):
-        root_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = "sync_details.json"
-        file_path = os.path.join(root_dir, file_path)
+        current_dir  = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(current_dir)
+        file_path = "client/sync_details.json"
+        file_path = os.path.join(parent_dir, file_path)
         result = {}
         result["version_sync_done"] = int(version)
         with open(file_path, "w") as outfile:

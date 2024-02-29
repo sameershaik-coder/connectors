@@ -88,64 +88,10 @@ class ReportClient(ORKLAPIClient):
                     raise Exception(f"Unable to perform sync from version {SYNC_FROM_VERSION} to latest version {latest_version}. Please check the config file.")        
             
         
-        # all_entries = self.get_some_orkl_collection(limit,offset)["data"]["entries"]
-        
-        # if self.check_version_id_exists(SYNC_FROM_VERSION,all_entries):
-        #     print("Version exists")
-        
-        
-        # filtered_entries = [entry for entry in all_entries if entry.get('ID') > SYNC_FROM_VERSION]
-        
-        # reports_collection = filtered_entries
-        
-        
         if reports_collection is None and error==True:
             raise Exception(
                 "Attempting to retrieve data failed. " "Wait for connector to re-run..."
             )
 
         
-
-        # page_size = cpe_collection["resultsPerPage"]
-        # cpe_softwares_total = cpe_collection["products"]
-        # total_items = cpe_collection["totalResults"]
-
-        # if page_size == 0:
-        #     msg = "[API] No CPE Softwares to retrieve..."
-        #     self.helper.log_info(msg)
-        # elif page_size >= total_items:
-        #     msg = f"[API] Received all {page_size} items. Pagination not required."
-        #     self.helper.log_info(msg)
-        # else:
-        #     msg = f"[API] Received first {page_size} items of {total_items} total items, start pagination..."
-        #     self.helper.log_info(msg)
-
-        #     start_index = page_size
-
-        #     while start_index < total_items:
-        #         cpe_params.update(
-        #             {"startIndex": start_index, "resultsPerPage": page_size}
-        #         )
-
-        #         cpe_collection = self.get_complete_collection(cpe_params)
-
-        #         if cpe_collection is None:
-        #             raise Exception(
-        #                 "Attempting to retrieve data failed. "
-        #                 "Wait for connector to re-run..."
-        #             )
-
-        #         page_size = cpe_collection["resultsPerPage"]
-        #         start_index += page_size
-
-        #         msg = f"[API] Received next {page_size} items, currently received {start_index} items of {total_items} total items."
-        #         self.helper.log_info(msg)
-
-        #         cpe_softwares_total += cpe_collection
-
-        # info_msg = (
-        #     f"[API] All CVEs are retrieved. "
-        #     f"Getting {len(cpe_softwares_total)} vulnerabilities in total"
-        # )
-        # self.helper.log_info(info_msg)
         return reports_collection
