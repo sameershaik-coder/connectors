@@ -117,7 +117,14 @@ class OrklConverter:
             if version_sync_done >= SYNC_FROM_VERSION:
                 all_entries = self.get_entries_from_version_id(version_sync_done)
                 sorted_entries = sorted(all_entries, key=lambda x: x["ID"])
+                entries_processed_count=0
                 for entry in sorted_entries:
+                    if(self.check_entries_processed_limit_reached(entries_processed_count)):
+                        info_msg = (
+                                            f"[CONVERTER] maximum processed entries limit reached for current run. Process rest of entries in next run..."
+                                        )
+                        self.helper.log_info(info_msg)
+                        break
                     current_entry_reports=[]
                     reports = entry.get("created_library_entries")
                     if reports:
@@ -150,6 +157,7 @@ class OrklConverter:
                                         time.sleep(10)
                                 entry_id=entry["ID"]
                                 self.update_version_sync_done(entry_id)
+                                entries_processed_count+=1
                         else:
                             raise Exception(
                                 "Attempting to retrieve data failed. " "Wait for connector to re-run..."
@@ -169,6 +177,12 @@ class OrklConverter:
         
         
         return results
+
+    def check_entries_processed_limit_reached(self,count:int):
+        if count>int(self.config.max_entries_to_proccess):
+            return True
+        else:
+            return False
 
     def update_version_sync_done(self, version):
         root_dir = os.path.dirname(os.path.abspath(__file__))

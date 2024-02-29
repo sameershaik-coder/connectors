@@ -37,6 +37,12 @@ class ConfigOrkl:
         """
         Connector configuration variables
         """
+        self.max_entries_to_proccess = get_config_variable(
+            "ORKL_MAX_ENTRIES_TO_PROCESS",
+            ["orkl", "max_entries_to_proccess"],
+            self.load,
+        )
+
         self.update_existing_data = get_config_variable(
             "CONNECTOR_UPDATE_EXISTING_DATA",
             ["connector", "update_existing_data"],
