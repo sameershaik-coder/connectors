@@ -125,43 +125,17 @@ class OrklConverter:
                                         )
                         self.helper.log_info(info_msg)
                         break
-                    current_entry_reports=[]
-                    reports = entry.get("created_library_entries")
-                    if reports:
-                        current_entry_reports+=self.process_reports(reports)
-                        if current_entry_reports is not None:
-                            if(len(current_entry_reports) == 0):
-                                break
-                            else:
-                                # Process and store data in chunks of 100
-                                for i in range(0, len(current_entry_reports), 1):
-                                    
-                                    processed_object = self.process_object(current_entry_reports[i])
-                                    if len(processed_object) != 0:
-                                        reports_bundle = self._to_stix_bundle(processed_object)
-                                        reports_to_json = self._to_json_bundle(reports_bundle)
-
-                                        # Retrieve the author object for the info message
-                                        info_msg = (
-                                            f"[CONVERTER] Sending bundle to server with {len(reports_bundle)} objects, "
-                                            f"concerning {len(processed_object) - 1} reports"
+                    else:
+                        extract_complete=self.extract_reports_send_bundle(entry,work_id)
+                        if extract_complete==True:
+                            entry_id=entry["ID"]
+                            self.update_version_sync_done(entry_id)
+                            entries_processed_count+=1
+                            info_msg = (
+                                            f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
                                         )
-                                        self.helper.log_info(info_msg)
-
-                                        self.helper.send_stix2_bundle(
-                                            reports_to_json,
-                                            update=self.config.update_existing_data,
-                                            work_id=work_id,
-                                        )
-                                        print("Sleeping for 600 seconds")
-                                        time.sleep(10)
-                                entry_id=entry["ID"]
-                                self.update_version_sync_done(entry_id)
-                                entries_processed_count+=1
-                        else:
-                            raise Exception(
-                                "Attempting to retrieve data failed. " "Wait for connector to re-run..."
-                            )
+                            self.helper.log_info(info_msg)
+                    
             else:
                 msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
                 self.helper.log_info(msg)
@@ -178,6 +152,57 @@ class OrklConverter:
         
         return results
 
+    def extract_reports_send_bundle(self,entry,work_id):
+        result=False
+        current_entry_reports=[]
+        reports = entry.get("created_library_entries")
+        entry_id=entry["ID"]
+        if reports:
+            current_entry_reports+=self.process_reports(reports)
+            if current_entry_reports is not None:
+                if(len(current_entry_reports) == 0):
+                    # log message to OCTI when no reports found for entry id
+                    info_msg = (
+                        f"[CONVERTER] No reports were found for the entry with entry id : {entry_id}"
+                        f"moving to next entry"
+                    )
+                    self.helper.log_info(info_msg)
+                else:
+                    # Process and store data in chunks of 100
+                    for i in range(0, len(current_entry_reports), 1):
+                        processed_object = self.process_object(current_entry_reports[i])
+                        if len(processed_object) != 0:
+                            reports_bundle = self._to_stix_bundle(processed_object)
+                            reports_to_json = self._to_json_bundle(reports_bundle)
+
+                            # Retrieve the author object for the info message
+                            info_msg = (
+                                f"Sending bundle to server with {len(reports_bundle)} objects, "
+                                f"concerning {len(processed_object) - 1} reports"
+                            )
+                            self.helper.log_info(info_msg)
+
+                            self.helper.send_stix2_bundle(
+                                reports_to_json,
+                                update=self.config.update_existing_data,
+                                work_id=work_id,
+                            )
+                            print("Sleeping for 600 seconds")
+                            time.sleep(10)
+                    result=True
+            else:
+                raise Exception(
+                    "Attempting to extract reports from entry failed. " "Wait for connector to re-run..."
+                )
+        else:
+        # log message to OCTI when no reports found for entry id
+            info_msg = (
+                f"[CONVERTER] No reports were found for the entry with entry id : {entry_id} "
+                f"moving to next entry"
+            )
+            self.helper.log_info(info_msg)
+        return result
+        
     def check_entries_processed_limit_reached(self,count:int):
         if count>int(self.config.max_entries_to_proccess):
             return True
@@ -393,7 +418,6 @@ class OrklConverter:
             object_refs=report_object_references,
             external_references=external_references,
             labels="orkl-threat-report",
-            confidence=60,
             custom_properties={
                 "x_opencti_report_status": 2,
                 "x_opencti_files": [],
