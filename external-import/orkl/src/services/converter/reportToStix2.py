@@ -111,10 +111,10 @@ class OrklConverter:
         results=[]
         config = ConfigOrkl()
         SYNC_FROM_VERSION = int(config.orkl_sync_from_version)
-        latest_version = self.get_latest_orkl_version()
         version_sync_done = self.get_version_sync_done()  
-        if latest_version >= SYNC_FROM_VERSION:
-            if version_sync_done >= SYNC_FROM_VERSION:
+        if version_sync_done > SYNC_FROM_VERSION:
+            latest_version = self.get_latest_orkl_version()
+            if latest_version > SYNC_FROM_VERSION and latest_version > version_sync_done:
                 all_entries = self.get_entries_from_version_id(version_sync_done)
                 sorted_entries = sorted(all_entries, key=lambda x: x["ID"])
                 entries_processed_count=0
@@ -135,21 +135,20 @@ class OrklConverter:
                                             f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
                                         )
                             self.helper.log_info(info_msg)
-                    
             else:
-                msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
-                self.helper.log_info(msg)
-        else:
-            if SYNC_FROM_VERSION > latest_version:
-                raise Exception(f"Version does not exist, check orkl_sync_from_version in config file. Latest version is {latest_version} and sync from version is {SYNC_FROM_VERSION}")
-            else:
-                if latest_version==SYNC_FROM_VERSION and version_sync_done==SYNC_FROM_VERSION:
-                    msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
-                    self.helper.log_info(msg)
+                if SYNC_FROM_VERSION > latest_version:
+                    raise Exception(f"Version does not exist, check orkl_sync_from_version in config file. Latest version is {latest_version} and sync from version is {SYNC_FROM_VERSION}")
                 else:
-                    raise Exception(f"Unable to perform sync from version {SYNC_FROM_VERSION} to latest version {latest_version}. Please check the config file.")        
-        
-        
+                    if latest_version==version_sync_done:
+                        msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
+                        self.helper.log_info(msg)
+                    else:
+                        raise Exception(f"Unable to perform sync from version {SYNC_FROM_VERSION} to latest version {latest_version}. Please check the config file.")        
+        else:
+            if version_sync_done < SYNC_FROM_VERSION:
+                msg = f"sync from version is {SYNC_FROM_VERSION} and sync done version is : {version_sync_done}. Please change sync from version to >= {version_sync_done}"
+                self.helper.log_info(msg)
+                
         return results
 
     def extract_reports_send_bundle(self,entry,work_id):
@@ -273,12 +272,11 @@ class OrklConverter:
         report_name = report_names[0].split(".")[0]
 
         external_references=[]
-        
+        threat_actor_objects = []
+        threat_actor_relationship_objects = []
+        threat_actor_source_objects = []
+        threat_actors_tools_objects=[]
         if len(threat_actors) > 0:
-            threat_actor_objects = []
-            threat_actor_relationship_objects = []
-            threat_actor_source_objects = []
-            threat_actors_tools_objects=[]
             for threat_actor in threat_actors:
                 # create threat actor tools objects
                 tools = threat_actor["tools"]
