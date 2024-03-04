@@ -89,7 +89,7 @@ class OrklConnector:
 
         orkl_params = self._update_orkl_params(start_date, now)
 
-        self.converter.reports_to_stix2(work_id,orkl_params)
+        self.converter.perform_sync(work_id,orkl_params)
 
     def _import_history(
         self, start_date: datetime, end_date: datetime, work_id: str
@@ -140,7 +140,7 @@ class OrklConnector:
                         start_date_current_year, end_date_current_year
                     )
 
-                    self.converter.reports_to_stix2(orkl_params, work_id)
+                    self.converter.perform_sync(orkl_params, work_id)
                     days_in_year = 0
 
                 """
@@ -153,7 +153,7 @@ class OrklConnector:
                         start_date_current_year, end_date_current_year
                     )
 
-                    self.converter.reports_to_stix2(orkl_params, work_id)
+                    self.converter.perform_sync(orkl_params, work_id)
                     start_date_current_year += timedelta(days=MAX_AUTHORIZED)
                     days_in_year -= MAX_AUTHORIZED
                 else:
@@ -164,7 +164,7 @@ class OrklConnector:
                     orkl_params = self._update_orkl_params(
                         start_date_current_year, end_date_current_year
                     )
-                    self.converter.reports_to_stix2(orkl_params, work_id)
+                    self.converter.perform_sync(orkl_params, work_id)
                     days_in_year = 0
 
             info_msg = f"[CONNECTOR] Importing orkl history for year {year} finished"
@@ -183,7 +183,7 @@ class OrklConnector:
 
         # Update date range
         orkl_params = self._update_orkl_params(last_run_ts, now)
-        self.converter.reports_to_stix2(work_id, orkl_params)
+        self.converter.perform_sync(work_id, orkl_params)
 
     @staticmethod
     def _update_orkl_params(start_date: datetime, end_date: datetime) -> dict:

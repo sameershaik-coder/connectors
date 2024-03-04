@@ -29,7 +29,7 @@ class OrklConverter:
         :return:
         """
 
-        report_objects = self.reports_to_stix2(work_id, orkl_params)
+        report_objects = self.perform_sync(work_id, orkl_params)
 
 
         # if len(software_objects) != 0:
@@ -102,7 +102,7 @@ class OrklConverter:
             print(report_data)
         return result
 
-    def reports_to_stix2(self, work_id, orkl_params: dict) -> list:
+    def perform_sync(self, work_id, orkl_params: dict) -> list:
         """
         Retrieve all reports from orkl to convert into STIX2 format
         :param orkl_params: Dict of params
