@@ -30,7 +30,6 @@ class OrklConnector:
         else:
             while True:
                 self.process_data()
-                time.sleep(60)
 
     def _initiate_work(self, timestamp: int) -> str:
         """
@@ -196,18 +195,6 @@ class OrklConnector:
 
     def process_data(self) -> None:
         try:
-            
-            # TEMP CODE BEGIN
-            # now = datetime.now()
-            # current_time = int(datetime.timestamp(now))
-            # work_id = self._initiate_work(current_time)
-            # current_state = self.helper.get_state()
-            # last_run = current_state["last_run"]
-            # self._maintain_data(now, last_run, work_id)
-            
-            # TEMP CODE END
-            
-            
             """
             Get the current state and check if connector already runs
             """
@@ -231,8 +218,6 @@ class OrklConnector:
             work_id = self._initiate_work(current_time)
             self._maintain_data(now, last_run, work_id)
             self.update_connector_state(current_time, work_id)
-
-            time.sleep(5)
 
         except (KeyboardInterrupt, SystemExit):
             msg = "[CONNECTOR] Connector stop..."

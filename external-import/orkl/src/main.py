@@ -6,7 +6,7 @@ from connector import OrklConnector
 
 if __name__ == "__main__":
     """
-    Entry point of the script5
+    Entry point of the script
     """
     try:
         connector = OrklConnector()

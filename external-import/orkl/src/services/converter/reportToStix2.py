@@ -147,6 +147,12 @@ class OrklConverter:
         elif version_sync_done > 0:
             # get all entries from where connector has left off from prevoius run
             all_entries = self.get_entries_from_version_id(version_sync_done)
+            if len(all_entries)==0:
+                # check if sync is up to date with orkl api
+                msg = f"Data is already up to date. Latest entry id is {version_sync_done} and data sync done entry id is {version_sync_done}"
+                self.helper.log_info(msg)
+                return results
+        
         sorted_entries = sorted(all_entries, key=lambda x: x["ID"])
         entries_processed_count=0
         for entry in sorted_entries:
@@ -169,7 +175,8 @@ class OrklConverter:
                 #     info_msg = (
                 #                     f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
                 #                 )
-                #     self.helper.log_info(info_msg)    
+                #     self.helper.log_info(info_msg)        
+        
                 
         return results
 
