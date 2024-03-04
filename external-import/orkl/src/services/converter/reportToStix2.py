@@ -102,7 +102,7 @@ class OrklConverter:
             print(report_data)
         return result
 
-    def perform_sync(self, work_id, orkl_params: dict) -> list:
+    def perform_sync(self, work_id) -> list:
         """
         Retrieve all reports from orkl to convert into STIX2 format
         :param orkl_params: Dict of params
@@ -126,15 +126,18 @@ class OrklConverter:
                         self.helper.log_info(info_msg)
                         break
                     else:
-                        extract_complete=self.extract_reports_send_bundle(entry,work_id)
-                        if extract_complete==True:
-                            entry_id=entry["ID"]
-                            self.update_version_sync_done(entry_id)
-                            entries_processed_count+=1
-                            info_msg = (
-                                            f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
-                                        )
-                            self.helper.log_info(info_msg)
+                        print(f"uncomment below code, perform entry sending..{entry['ID']} and {work_id}")
+                        entries_processed_count+=1 # remove this line later only for debugging
+                        
+                        # extract_complete=self.extract_reports_send_bundle(entry,work_id)
+                        # if extract_complete==True:
+                        #     entry_id=entry["ID"]
+                        #     self.update_version_sync_done(entry_id)
+                        #     entries_processed_count+=1
+                        #     info_msg = (
+                        #                     f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
+                        #                 )
+                        #     self.helper.log_info(info_msg)
             else:
                 if SYNC_FROM_VERSION > latest_version:
                     raise Exception(f"Version does not exist, check orkl_sync_from_version in config file. Latest version is {latest_version} and sync from version is {SYNC_FROM_VERSION}")
