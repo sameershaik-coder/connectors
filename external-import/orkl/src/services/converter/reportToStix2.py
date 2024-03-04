@@ -63,13 +63,39 @@ class OrklConverter:
     def get_latest_orkl_version(self):
         return int(self.client_api.get_orkl_latest_version()["data"]["ID"])
     
+    
+    def get_entries_from_year(self,from_year) -> list:
+        task_completed = False
+        limit = 100
+        offset = 0
+        result=[]
+        while(task_completed == False):
+            data = self.client_api.get_some_orkl_collection(limit,offset)
+            if data is not None:
+                all_entries = data["data"]["entries"]
+                filtered_entries = [entry for entry in all_entries if datetime.strptime(entry['CreatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ').year >= from_year]
+                if len(filtered_entries)==0:
+                    result+=filtered_entries
+                    self.current_orkl_entries=result
+                    task_completed = True
+                    return result
+                else:
+                    result+=filtered_entries
+                    offset += limit
+                    task_completed=False
+            else:
+                task_completed = True
+                return result
+    
     def get_entries_from_version_id(self,from_version_id) -> list:
         id_exists = False
         limit = 100
         offset = 0
         result=[]
         while(id_exists == False):
-            all_entries = self.client_api.get_some_orkl_collection(limit,offset)["data"]["entries"]
+            data = self.client_api.get_some_orkl_collection(limit,offset)
+            if len(data["data"]["entries"])>0:
+                all_entries = data["data"]["entries"]
             id_exists = self.check_version_id_exists(from_version_id,all_entries)
             if id_exists:
                 filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]
@@ -81,6 +107,9 @@ class OrklConverter:
                 offset += limit
                 id_exists=False
             
+    
+    def check_year_exists(self,id, entries) -> bool:
+        return [entry for entry in entries if entry.get('ID') == id]
     
     def check_version_id_exists(self,id, entries) -> bool:
         return [entry for entry in entries if entry.get('ID') == id]
@@ -101,6 +130,48 @@ class OrklConverter:
             result.append(report_data)
             print(report_data)
         return result
+    
+    def perform_sync_from_year(self, work_id) -> list:
+        """
+        Retrieve all reports from orkl to convert into STIX2 format
+        :param orkl_params: Dict of params
+        :return: List of data converted into STIX2
+        """
+        results=[]
+        config = ConfigOrkl()
+        SYNC_FROM_YEAR = int(config.history_start_year)
+        version_sync_done = self.get_version_sync_done()  
+        if version_sync_done <= 0:
+            # running the connector for first time so get entries by the year
+            all_entries = self.get_entries_from_year(SYNC_FROM_YEAR)
+        elif version_sync_done > 0:
+            # get all entries from where connector has left off from prevoius run
+            all_entries = self.get_entries_from_version_id(version_sync_done)
+        sorted_entries = sorted(all_entries, key=lambda x: x["ID"])
+        entries_processed_count=0
+        for entry in sorted_entries:
+            if(self.check_entries_processed_limit_reached(entries_processed_count)):
+                info_msg = (
+                                    f"[CONVERTER] maximum processed entries limit reached for current run. Process rest of entries in next run..."
+                                )
+                self.helper.log_info(info_msg)
+                break
+            else:
+                print(f"uncomment below code, perform entry sending..{entry['ID']} and {work_id}")
+                self.update_version_sync_done(entry['ID'])
+                entries_processed_count+=1 # remove above lines later only for debugging
+                
+                # extract_complete=self.extract_reports_send_bundle(entry,work_id)
+                # if extract_complete==True:
+                #     entry_id=entry["ID"]
+                #     self.update_version_sync_done(entry_id)
+                #     entries_processed_count+=1
+                #     info_msg = (
+                #                     f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
+                #                 )
+                #     self.helper.log_info(info_msg)    
+                
+        return results
 
     def perform_sync(self, work_id) -> list:
         """
@@ -405,6 +476,12 @@ class OrklConverter:
         
         for report_source in report_source_objects:
             result.append(report_source)
+        
+        
+        # Check if the length of report_object_references is 0
+        if len(report_object_references) == 0:
+            # append report source as reference for the report
+            report_object_references.append(report_source)  
             
         report = stix2.Report(
             id=Report.generate_id(report_name,created_at),

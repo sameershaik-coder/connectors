@@ -179,11 +179,7 @@ class OrklConnector:
         """
         self.helper.log_info("[CONNECTOR] Getting the last orkls since the last run...")
 
-        last_run_ts = datetime.utcfromtimestamp(last_run)
-
-        # Update date range
-        orkl_params = self._update_orkl_params(last_run_ts, now)
-        self.converter.perform_sync(work_id)
+        self.converter.perform_sync_from_year(work_id)
 
     @staticmethod
     def _update_orkl_params(start_date: datetime, end_date: datetime) -> dict:
@@ -231,59 +227,10 @@ class OrklConnector:
                 msg = "[CONNECTOR] Connector has never run..."
                 self.helper.log_info(msg)
 
-            """
-            ======================================================
-            Main process if connector successfully works
-            ======================================================
-            """
-
-            """
-            ================================================================
-            If the connector never runs, import the most recent orkls
-            from the last max_date_range (can be configured) to now
-            ================================================================
-            """
-            if last_run is None:
-                # Initiate work_id to track the job
-                work_id = self._initiate_work(current_time)
-                """
-                =================================================================
-                If the connector never runs and user wants to pull orkl history
-                =================================================================
-                """
-                if self.config.pull_history:
-                    start_date = datetime(self.config.history_start_year, 1, 1)
-                    end_date = now
-                    self._import_history(start_date, end_date, work_id)
-                else:
-                    self._import_recent(now, work_id)
-
-                self.update_connector_state(current_time, work_id)
-
-                """
-                ===================================================================
-                Import orkls from the last run to now if maintain data is True
-                If the connector runs, and last run is more than current interval
-                ===================================================================
-                """
-            elif (
-                last_run is not None
-                and self.config.maintain_data
-                and (current_time - last_run) >= int(self.config.interval)
-            ):
-                # Initiate work_id to track the job
-                work_id = self._initiate_work(current_time)
-                self._maintain_data(now, last_run, work_id)
-                self.update_connector_state(current_time, work_id)
-
-            else:
-                new_interval = self.config.interval - (current_time - last_run)
-                new_interval_in_hours = round(new_interval / 60 / 60, 2)
-                self.helper.log_info(
-                    "[CONNECTOR] Connector will not run, next run in: "
-                    + str(new_interval_in_hours)
-                    + " hours"
-                )
+            # Initiate work_id to track the job
+            work_id = self._initiate_work(current_time)
+            self._maintain_data(now, last_run, work_id)
+            self.update_connector_state(current_time, work_id)
 
             time.sleep(5)
 
