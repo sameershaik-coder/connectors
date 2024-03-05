@@ -169,6 +169,9 @@ class CVEConnector:
 
             info_msg = f"[CONNECTOR] Importing CVE history for year {year} finished"
             self.helper.log_info(info_msg)
+    
+    def get_interval(self):
+        return int(self.config.interval) * 60
 
     def _maintain_data(self, now: datetime, last_run: float, work_id: str) -> None:
         """
@@ -184,6 +187,14 @@ class CVEConnector:
         # Update date range
         cve_params = self._update_cve_params(last_run_ts, now)
         self.converter.send_bundle(cve_params, work_id)
+        if self.helper.connect_run_and_terminate:
+            self.helper.log_info("Connector stop")
+            self.helper.metric.state("stopped")
+            self.helper.force_ping()
+            sys.exit(0)
+        self.helper.metric.state("idle")
+        time.sleep(self.get_interval())
+
 
     @staticmethod
     def _update_cve_params(start_date: datetime, end_date: datetime) -> dict:
@@ -272,7 +283,6 @@ class CVEConnector:
                     + str(new_interval_in_hours)
                     + " hours"
                 )
-
             time.sleep(5)
 
         except (KeyboardInterrupt, SystemExit):

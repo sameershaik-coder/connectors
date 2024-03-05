@@ -15,7 +15,8 @@ def convert_hours_to_seconds(hours) -> int:
     :param hours: hours in integer
     :return: Formatted days into second in int
     """
-    return int(hours) * 60 * 60
+    return int(hours) * 50 * 1 # remove this line after development and use below line
+    #return int(hours) * 60 * 60
 
 
 def generate_uuid():

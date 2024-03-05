@@ -169,6 +169,10 @@ class OrklConnector:
             info_msg = f"[CONNECTOR] Importing orkl history for year {year} finished"
             self.helper.log_info(info_msg)
 
+    def get_interval(self):
+        return self.config.interval
+
+
     def _maintain_data(self, now: datetime, last_run: float, work_id: str) -> None:
         """
         Maintain data updated if maintain_data config is True
@@ -193,6 +197,25 @@ class OrklConnector:
             "lastModEndDate": end_date.isoformat(),
         }
 
+    def sleep_until_next_interval(self):
+        if self.helper.connect_run_and_terminate:
+            self.helper.log_info("Connector stop")
+            self.helper.metric.state("stopped")
+            self.helper.force_ping()
+            sys.exit(0)
+
+        self.helper.metric.state("idle")
+        time.sleep(self.get_interval())
+    
+    def run_task(self, last_run):
+        now = datetime.now()
+        current_time = int(datetime.timestamp(now))
+        # Initiate work_id to track the job
+        work_id = self._initiate_work(current_time)
+        self._maintain_data(now, last_run, work_id)
+        self.update_connector_state(current_time, work_id)
+        self.sleep_until_next_interval()
+
     def process_data(self) -> None:
         try:
             """
@@ -201,23 +224,31 @@ class OrklConnector:
             now = datetime.now()
             current_time = int(datetime.timestamp(now))
             current_state = self.helper.get_state()
-
-            if current_state is not None and "last_run" in current_state:
-                last_run = current_state["last_run"]
-
-                msg = "[CONNECTOR] Connector last run: " + datetime.utcfromtimestamp(
-                    last_run
-                ).strftime("%Y-%m-%d %H:%M:%S")
-                self.helper.log_info(msg)
+            if current_state is not None:
+                if "last_run" in current_state:
+                    last_run = current_state["last_run"]
+                    if(self.config.maintain_data and (current_time - last_run) >= int(self.config.interval)):
+                        self.run_task(last_run)
+                    else:
+                        new_interval = self.config.interval - (current_time - last_run)
+                        new_interval_in_hours = round(new_interval / 60 / 60, 2)
+                        self.helper.log_info(
+                            "[CONNECTOR] Connector will not run, next run in: "
+                            + str(new_interval_in_hours)
+                            + " hours"
+                        )
+                        time.sleep(new_interval)
+                else:
+                    last_run = None
+                    self.run_task(last_run)
             else:
                 last_run = None
-                msg = "[CONNECTOR] Connector has never run..."
-                self.helper.log_info(msg)
-
-            # Initiate work_id to track the job
-            work_id = self._initiate_work(current_time)
-            self._maintain_data(now, last_run, work_id)
-            self.update_connector_state(current_time, work_id)
+                self.run_task(last_run)
+            
+            
+                
+            
+            
 
         except (KeyboardInterrupt, SystemExit):
             msg = "[CONNECTOR] Connector stop..."

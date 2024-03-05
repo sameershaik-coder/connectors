@@ -142,6 +142,8 @@ class OrklConverter:
         SYNC_FROM_YEAR = int(config.history_start_year)
         version_sync_done = self.get_version_sync_done()  
         if version_sync_done <= 0:
+            msg = "[CONNECTOR] Connector has never run..."
+            self.helper.log_info(msg)
             # running the connector for first time so get entries by the year
             all_entries = self.get_entries_from_year(SYNC_FROM_YEAR)
         elif version_sync_done > 0:
