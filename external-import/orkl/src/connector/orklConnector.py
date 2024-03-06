@@ -226,6 +226,7 @@ class OrklConnector:
             current_state = self.helper.get_state()
             if current_state is not None:
                 if "last_run" in current_state:
+                    # previous run was okay, continue
                     last_run = current_state["last_run"]
                     if(self.config.maintain_data and (current_time - last_run) >= int(self.config.interval)):
                         self.run_task(last_run)
@@ -239,9 +240,11 @@ class OrklConnector:
                         )
                         time.sleep(new_interval)
                 else:
+                    # something went wrong in previous run, continue
                     last_run = None
                     self.run_task(last_run)
             else:
+                # running the connector for first time
                 last_run = None
                 self.run_task(last_run)
             
