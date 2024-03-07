@@ -14,22 +14,25 @@ class ReportClient(ORKLAPIClient):
     def get_latest_orkl_version(self):
         return int(self.get_latest_library_version()["data"]["ID"])
     
-    def get_entries_from_version_id(self,from_version_id) -> list:
-        id_exists = False
+    def get_entries_from_version_id(self, from_version_id) -> list:
+        version_id_found = False
         limit = 100
         offset = 0
-        result=[]
-        while(id_exists == False):
-            all_entries = self.get_library_work_items(limit,offset)["data"]["entries"]
-            id_exists = self.check_version_id_exists(from_version_id,all_entries)
-            if id_exists:
+        result = []
+
+        while not version_id_found:
+            all_entries = self.get_library_work_items(limit, offset)["data"]["entries"]
+            version_id_found = self.check_version_id_exists(from_version_id, all_entries)
+
+            if version_id_found:
                 filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]
-                result+=filtered_entries
-                return result
+                result += filtered_entries
             else:
-                result+=all_entries
+                result += all_entries
                 offset += limit
-                id_exists=False
+
+        return result
+
             
     
     def check_version_id_exists(self,id, entries) -> bool:
