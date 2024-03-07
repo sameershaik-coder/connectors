@@ -5,8 +5,6 @@ import os
 
 class ReportClient(ORKLAPIClient):
     
-    current_orkl_entries=[]
-    
     def get_version_sync_done(self):
         root_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = "sync_details.json"
@@ -29,7 +27,6 @@ class ReportClient(ORKLAPIClient):
             if id_exists:
                 filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]
                 result+=filtered_entries
-                self.current_orkl_entries=result
                 return result
             else:
                 result+=all_entries
