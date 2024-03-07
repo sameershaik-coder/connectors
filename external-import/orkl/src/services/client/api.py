@@ -80,7 +80,7 @@ class ORKLAPIClient:
         """
         If params is None, retrieve all reports from orkl
         :param api_params: Params to filter what list to return
-        :return: A list of dicts of the complete collection of ORKL
+        :return: A list of the complete collection of ORKL library entries
         """
         try:
             params={
