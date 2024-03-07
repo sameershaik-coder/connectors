@@ -24,7 +24,7 @@ def read_json_from_file(file_path):
             data = json.load(json_file)
             return data["version_sync_done"]
     except FileNotFoundError:
-        raise FileNotFoundError("Sync details file not found.")
+        raise FileNotFoundError(f"Given file not found at path {file_path}.")
     except json.JSONDecodeError:
         raise json.JSONDecodeError("Error decoding JSON data.")
     except KeyError:
