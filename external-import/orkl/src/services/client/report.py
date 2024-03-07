@@ -61,7 +61,6 @@ class ReportClient(ORKLAPIClient):
         :return: A list of dicts of report entries
         """
         reports_collection = None
-        error=False
         config = ConfigOrkl()
         SYNC_FROM_VERSION = int(config.orkl_sync_from_version)
         latest_version = self.get_latest_orkl_version()
@@ -84,11 +83,4 @@ class ReportClient(ORKLAPIClient):
                 else:
                     raise Exception(f"Unable to perform sync from version {SYNC_FROM_VERSION} to latest version {latest_version}. Please check the config file.")        
             
-        
-        if reports_collection is None and error==True:
-            raise Exception(
-                "Attempting to retrieve data failed. " "Wait for connector to re-run..."
-            )
-
-        
         return reports_collection
