@@ -69,7 +69,7 @@ class OrklConverter:
         offset = 0
         result=[]
         while(task_completed == False):
-            data = self.client_api.get_some_orkl_collection(limit,offset)
+            data = self.client_api.get_library_work_items(limit,offset)
             if data is not None:
                 all_entries = data["data"]["entries"]
                 filtered_entries = [entry for entry in all_entries if datetime.strptime(entry['CreatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ').year >= from_year]
@@ -92,7 +92,7 @@ class OrklConverter:
         offset = 0
         result=[]
         while(id_exists == False):
-            data = self.client_api.get_some_orkl_collection(limit,offset)
+            data = self.client_api.get_library_work_items(limit,offset)
             if len(data["data"]["entries"])>0:
                 all_entries = data["data"]["entries"]
             id_exists = self.check_version_id_exists(from_version_id,all_entries)

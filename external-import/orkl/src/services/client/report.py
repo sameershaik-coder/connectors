@@ -24,7 +24,7 @@ class ReportClient(ORKLAPIClient):
         offset = 0
         result=[]
         while(id_exists == False):
-            all_entries = self.get_some_orkl_collection(limit,offset)["data"]["entries"]
+            all_entries = self.get_library_work_items(limit,offset)["data"]["entries"]
             id_exists = self.check_version_id_exists(from_version_id,all_entries)
             if id_exists:
                 filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]

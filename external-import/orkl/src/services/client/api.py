@@ -76,7 +76,7 @@ class ORKLAPIClient:
         reports_collection = response.json()
         return reports_collection
     
-    def get_some_orkl_collection(self,limit,offset, api_params=None):
+    def get_library_work_items(self,limit,offset):
         """
         If params is None, retrieve all reports from orkl
         :param api_params: Params to filter what list to return
