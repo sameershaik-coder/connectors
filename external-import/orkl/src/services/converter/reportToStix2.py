@@ -12,7 +12,6 @@ class OrklConverter:
         self.config = ConfigOrkl()
         self.helper = helper
         self.client_api = ReportClient(
-            api_key=self.config.api_key,
             helper=self.helper,
             header=f"OpenCTI-orkl/{APP_VERSION}",
         )

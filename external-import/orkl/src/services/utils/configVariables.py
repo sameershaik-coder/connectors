@@ -54,12 +54,6 @@ class ConfigOrkl:
             ["orkl", "base_url"],
             self.load,
         )
-
-        self.api_key = get_config_variable(
-            "ORKL_API_KEY",
-            ["orkl", "api_key"],
-            self.load,
-        )
         
         self.orkl_sync_from_version = get_config_variable(
             "ORKL_SYNC_FROM_VERSION",

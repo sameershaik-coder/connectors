@@ -11,15 +11,13 @@ class ORKLAPIClient:
     """
     Working with ORKL API
     """
-    def __init__(self, api_key, helper, header):
+    def __init__(self, helper, header):
         """
         Initialize ORKL API with necessary configurations
-        :param api_key: API key in string
         :param helper: OCTI helper
         :param header:
         """
-        headers = {"Bearer": api_key, "User-Agent": header}
-        #self.token = api_key
+        headers = {"User-Agent": header}
         self.helper = helper
         self.session = requests.Session()
         self.session.headers.update(headers)
