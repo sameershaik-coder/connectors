@@ -1,7 +1,7 @@
 from .api import ORKLAPIClient
-import json
 from services.utils.configVariables import ConfigOrkl
 import os
+from services.utils import read_json_from_file
 
 class ReportClient(ORKLAPIClient):
     
@@ -9,9 +9,7 @@ class ReportClient(ORKLAPIClient):
         root_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = "sync_details.json"
         file_path = os.path.join(root_dir, file_path)
-        with open(file_path, 'r') as json_file:
-        # Load the JSON data from the file
-            return json.load(json_file)["version_sync_done"]
+        return read_json_from_file(file_path)
     
     def get_latest_orkl_version(self):
         return int(self.get_latest_library_version()["data"]["ID"])
