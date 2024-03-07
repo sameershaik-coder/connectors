@@ -60,7 +60,7 @@ class OrklConverter:
             return json.load(json_file)["version_sync_done"]
     
     def get_latest_orkl_version(self):
-        return int(self.client_api.get_orkl_latest_version()["data"]["ID"])
+        return int(self.client_api.get_orkl_latest_library_version()["data"]["ID"])
     
     
     def get_entries_from_year(self,from_year) -> list:
@@ -268,8 +268,8 @@ class OrklConverter:
                                 update=self.config.update_existing_data,
                                 work_id=work_id,
                             )
-                            print("Sleeping for 600 seconds")
-                            time.sleep(10)
+                            print("Completed extracting reports from {entry_id}")
+                            #time.sleep(10)
                     result=True
             else:
                 raise Exception(

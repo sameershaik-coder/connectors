@@ -66,7 +66,7 @@ class ORKLAPIClient:
                 "[API] Attempting to retrieve data failed. Wait for connector to re-run..."
             )
     
-    def get_orkl_latest_version(self):
+    def get_orkl_latest_library_version(self):
         response = self._request_data(self, BASE_URL+"/version")
         reports_collection = response.json()
         return reports_collection

@@ -16,7 +16,7 @@ class ReportClient(ORKLAPIClient):
             return json.load(json_file)["version_sync_done"]
     
     def get_latest_orkl_version(self):
-        return int(self.get_orkl_latest_version()["data"]["ID"])
+        return int(self.get_orkl_latest_library_version()["data"]["ID"])
     
     def get_entries_from_version_id(self,from_version_id) -> list:
         id_exists = False
