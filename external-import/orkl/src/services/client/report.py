@@ -38,24 +38,23 @@ class ReportClient(ORKLAPIClient):
     def check_version_id_exists(self,id, entries) -> bool:
         return [entry for entry in entries if entry.get('ID') == id]
     
-    def process_entries(self, entries) -> list:
-        result = []
+    def get_all_reports_from_entries(self, entries) -> list:
+        all_reports_data = []
         for entry in entries:
             reports = entry.get("created_library_entries")
             if reports:
-                result+=self.process_reports(reports)
+                all_reports_data.extend(self.get_reports_data_from_api(reports))
+        return all_reports_data
         
-        return result        
                 
-    def process_reports(self, reports) -> list:
-        result = []
+    def get_reports_data_from_api(self, reports) -> list:
+        reports_data = []
         for report in reports:
             report_data = self.get_entry_by_id(report)["data"]
-            result.append(report_data)
-            print(report_data)
-        return result
+            reports_data.append(report_data)
+        return reports_data
     
-    def get_reports(self, limit, offset, entries_params=None) -> list:
+    def get_reports(self) -> list:
         """
         Get and filter Entries from Orkl
         :param entries_params: Dict of params
@@ -70,7 +69,7 @@ class ReportClient(ORKLAPIClient):
             if version_sync_done < SYNC_FROM_VERSION:
                 all_entries = self.get_entries_from_version_id(version_sync_done)
                 print(all_entries)
-                reports_collection = self.process_entries(all_entries)
+                reports_collection = self.get_all_reports_from_entries(all_entries)
             else:
                 msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
                 self.helper.log_info(msg)

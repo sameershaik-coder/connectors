@@ -72,9 +72,14 @@ class ORKLAPIClient:
         return reports_collection
     
     def get_entry_by_id(self, id):
-        response = self._request_data(self, BASE_URL+'/entry/'+id)
-        reports_collection = response.json()
-        return reports_collection
+        try:
+            response = self._request_data(self, BASE_URL + '/entry/' + id)
+            response.raise_for_status()  # Raise an exception for non-2xx responses
+            entry_data = response.json()
+            return entry_data
+        except requests.RequestException as e:
+            print(f"Error retrieving entry by ID {id} at url {BASE_URL}/entry/{id}: {e}")
+            return None
     
     def get_library_work_items(self,limit,offset):
         """
