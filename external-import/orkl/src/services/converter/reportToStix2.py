@@ -60,7 +60,7 @@ class OrklConverter:
             return json.load(json_file)["version_sync_done"]
     
     def get_latest_orkl_version(self):
-        return int(self.client_api.get_orkl_latest_library_version()["data"]["ID"])
+        return int(self.client_api.get_latest_library_version()["data"]["ID"])
     
     
     def get_entries_from_year(self,from_year) -> list:
@@ -125,7 +125,7 @@ class OrklConverter:
     def process_reports(self, reports) -> list:
         result = []
         for report in reports:
-            report_data = self.client_api.get_report_by_id(report)["data"]
+            report_data = self.client_api.get_entry_by_id(report)["data"]
             result.append(report_data)
             print(report_data)
         return result

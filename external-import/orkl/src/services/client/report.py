@@ -16,7 +16,7 @@ class ReportClient(ORKLAPIClient):
             return json.load(json_file)["version_sync_done"]
     
     def get_latest_orkl_version(self):
-        return int(self.get_orkl_latest_library_version()["data"]["ID"])
+        return int(self.get_latest_library_version()["data"]["ID"])
     
     def get_entries_from_version_id(self,from_version_id) -> list:
         id_exists = False
@@ -52,7 +52,7 @@ class ReportClient(ORKLAPIClient):
     def process_reports(self, reports) -> list:
         result = []
         for report in reports:
-            report_data = self.get_report_by_id(report)["data"]
+            report_data = self.get_entry_by_id(report)["data"]
             result.append(report_data)
             print(report_data)
         return result
