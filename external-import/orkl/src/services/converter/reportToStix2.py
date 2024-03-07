@@ -165,19 +165,19 @@ class OrklConverter:
                 self.helper.log_info(info_msg)
                 break
             else:
-                print(f"uncomment below code, perform entry sending..{entry['ID']} and {work_id}")
-                self.update_version_sync_done(entry['ID'])
-                entries_processed_count+=1 # remove above lines later only for debugging
+                # print(f"uncomment below code, perform entry sending..{entry['ID']} and {work_id}")
+                # self.update_version_sync_done(entry['ID'])
+                # entries_processed_count+=1 # remove above lines later only for debugging
                 
-                # extract_complete=self.extract_reports_send_bundle(entry,work_id)
-                # if extract_complete==True:
-                #     entry_id=entry["ID"]
-                #     self.update_version_sync_done(entry_id)
-                #     entries_processed_count+=1
-                #     info_msg = (
-                #                     f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
-                #                 )
-                #     self.helper.log_info(info_msg)        
+                extract_complete=self.extract_reports_send_bundle(entry,work_id)
+                if extract_complete==True:
+                    entry_id=entry["ID"]
+                    self.update_version_sync_done(entry_id)
+                    entries_processed_count+=1
+                    info_msg = (
+                                    f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
+                                )
+                    self.helper.log_info(info_msg)        
         
                 
         return results
@@ -286,7 +286,7 @@ class OrklConverter:
         return result
         
     def check_entries_processed_limit_reached(self,count:int):
-        if count>int(self.config.max_entries_to_proccess):
+        if count>int(self.config.max_entries_to_process):
             return True
         else:
             return False
