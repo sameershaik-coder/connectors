@@ -94,18 +94,3 @@ class ORKLAPIClient:
 
         except Exception as err:
             self.helper.log_error(err)
-
-    def get_complete_collection(self, api_params=None):
-        """
-        If params is None, retrieve all reports from ORKL
-        :param api_params: Params to filter what list to return
-        :return: A list of dicts of the complete collection of reports from ORKL
-        """
-        try:
-            response = self._request_data(self, BASE_URL, params=api_params)
-
-            reports_collection = response.json()
-            return reports_collection
-
-        except Exception as err:
-            self.helper.log_error(err)
