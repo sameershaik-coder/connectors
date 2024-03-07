@@ -18,14 +18,14 @@ def convert_hours_to_seconds(hours) -> int:
     return int(hours) * 50 * 1 # remove this line after development and use below line
     #return int(hours) * 60 * 60
 
-def read_json_from_file(file_path):
+def get_json_object_from_file(file_path,key):
     try:
         with open(file_path, 'r') as json_file:
             data = json.load(json_file)
-            return data["version_sync_done"]
+            return data[key]
     except FileNotFoundError:
         raise FileNotFoundError(f"Given file not found at path {file_path}.")
     except json.JSONDecodeError:
         raise json.JSONDecodeError("Error decoding JSON data.")
     except KeyError:
-        raise KeyError("Key 'version_sync_done' not found in JSON data.")
+        raise KeyError(f"Key '{key}' not found in JSON data.")
