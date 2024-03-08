@@ -127,7 +127,6 @@ class OrklConverter:
         for report in reports:
             report_data = self.client_api.get_entry_by_id(report)["data"]
             result.append(report_data)
-            print(report_data)
         return result
     
     def perform_sync_from_year(self, work_id) -> list:
