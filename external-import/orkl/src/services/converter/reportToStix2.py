@@ -117,7 +117,7 @@ class OrklConverter:
             all_entries = self.get_entries_from_version_id(version_sync_done)
             if len(all_entries)==0:
                 # check if sync is up to date with orkl api
-                msg = f"Data is already up to date. Latest entry id is {version_sync_done} and data sync done entry id is {version_sync_done}"
+                msg = f"[CONVERTER] Data is already up to date. Latest entry id is {version_sync_done} and data sync done entry id is {version_sync_done}"
                 self.helper.log_info(msg)
                 return results
         
