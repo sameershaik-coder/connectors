@@ -29,27 +29,31 @@ class OrklConverter:
         return int(self.client_api.get_latest_library_version()["data"]["ID"])
     
     
-    def get_entries_from_year(self,from_year) -> list:
-        task_completed = False
+    def get_entries_from_year(self, from_year) -> list:
         limit = 100
         offset = 0
-        entries_data=[]
-        while(task_completed == False):
-            data = self.client_api.get_library_work_items(limit,offset)
-            if data is not None:
-                all_entries = data["data"]["entries"]
-                filtered_entries = [entry for entry in all_entries if datetime.strptime(entry['CreatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ').year >= from_year]
-                if len(filtered_entries)==0:
-                    entries_data+=filtered_entries
-                    task_completed = True
-                    return entries_data
-                else:
-                    entries_data+=filtered_entries
-                    offset += limit
-                    task_completed=False
-            else:
-                task_completed = True
-                return entries_data
+        entries_data = []
+
+        while True:
+            data = self.client_api.get_library_work_items(limit, offset)
+            
+            if data is None:
+                break
+
+            all_entries = data["data"]["entries"]
+            filtered_entries = [entry for entry in all_entries if self.is_entry_from_year(entry, from_year)]
+            
+            entries_data += filtered_entries
+            offset += limit
+            
+            if len(filtered_entries) == 0:
+                break
+
+        return entries_data
+
+    def is_entry_from_year(self, entry, from_year) -> bool:
+        entry_year = datetime.strptime(entry['CreatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ').year
+        return entry_year >= from_year
     
     def get_entries_from_version_id(self,from_version_id) -> list:
         id_exists = False
