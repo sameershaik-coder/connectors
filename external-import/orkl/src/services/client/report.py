@@ -68,7 +68,6 @@ class ReportClient(ORKLAPIClient):
         if latest_version >= SYNC_FROM_VERSION:
             if version_sync_done < SYNC_FROM_VERSION:
                 all_entries = self.get_entries_from_version_id(version_sync_done)
-                print(all_entries)
                 reports_collection = self.get_all_reports_from_entries(all_entries)
             else:
                 msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
