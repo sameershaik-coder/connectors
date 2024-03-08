@@ -55,28 +55,29 @@ class OrklConverter:
         entry_year = datetime.strptime(entry['CreatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ').year
         return entry_year >= from_year
     
-    def get_entries_from_version_id(self,from_version_id) -> list:
-        id_exists = False
+    def get_entries_from_version_id(self, from_version_id) -> list:
         limit = 100
         offset = 0
-        result=[]
-        while(id_exists == False):
-            data = self.client_api.get_library_work_items(limit,offset)
-            if len(data["data"]["entries"])>0:
-                all_entries = data["data"]["entries"]
-            id_exists = self.check_version_id_exists(from_version_id,all_entries)
+        entries_data = []
+
+        while True:
+            data = self.client_api.get_library_work_items(limit, offset)
+            
+            if data is None:
+                break
+
+            all_entries = data["data"]["entries"]
+            id_exists = self.check_version_id_exists(from_version_id, all_entries)
+            
             if id_exists:
                 filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]
-                result+=filtered_entries
-                return result
+                entries_data += filtered_entries
+                break
             else:
-                result+=all_entries
+                entries_data += all_entries
                 offset += limit
-                id_exists=False
-            
-    
-    def check_year_exists(self,id, entries) -> bool:
-        return [entry for entry in entries if entry.get('ID') == id]
+
+        return entries_data
     
     def check_version_id_exists(self,id, entries) -> bool:
         return [entry for entry in entries if entry.get('ID') == id]
