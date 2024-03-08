@@ -33,24 +33,23 @@ class OrklConverter:
         task_completed = False
         limit = 100
         offset = 0
-        result=[]
+        entries_data=[]
         while(task_completed == False):
             data = self.client_api.get_library_work_items(limit,offset)
             if data is not None:
                 all_entries = data["data"]["entries"]
                 filtered_entries = [entry for entry in all_entries if datetime.strptime(entry['CreatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ').year >= from_year]
                 if len(filtered_entries)==0:
-                    result+=filtered_entries
-                    self.current_orkl_entries=result
+                    entries_data+=filtered_entries
                     task_completed = True
-                    return result
+                    return entries_data
                 else:
-                    result+=filtered_entries
+                    entries_data+=filtered_entries
                     offset += limit
                     task_completed=False
             else:
                 task_completed = True
-                return result
+                return entries_data
     
     def get_entries_from_version_id(self,from_version_id) -> list:
         id_exists = False
@@ -65,7 +64,6 @@ class OrklConverter:
             if id_exists:
                 filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]
                 result+=filtered_entries
-                self.current_orkl_entries=result
                 return result
             else:
                 result+=all_entries
