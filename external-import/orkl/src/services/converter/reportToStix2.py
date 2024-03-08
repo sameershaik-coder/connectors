@@ -82,16 +82,15 @@ class OrklConverter:
     def check_version_id_exists(self,id, entries) -> bool:
         return [entry for entry in entries if entry.get('ID') == id]
     
-    def process_entries(self, entries) -> list:
+    def get_reports_data_from_entries(self, entries) -> list:
         result = []
         for entry in entries:
             reports = entry.get("created_library_entries")
             if reports:
-                result+=self.process_reports(reports)
-        
+                result+=self.get_reports_data(reports)
         return result        
                 
-    def process_reports(self, reports) -> list:
+    def get_reports_data(self, reports) -> list:
         result = []
         for report in reports:
             report_data = self.client_api.get_entry_by_id(report)["data"]
@@ -149,65 +148,13 @@ class OrklConverter:
                 
         return results
 
-    def perform_sync(self, work_id) -> list:
-        """
-        Retrieve all reports from orkl to convert into STIX2 format
-        :param orkl_params: Dict of params
-        :return: List of data converted into STIX2
-        """
-        results=[]
-        config = ConfigOrkl()
-        SYNC_FROM_VERSION = int(config.orkl_sync_from_version)
-        version_sync_done = self.get_version_sync_done()  
-        if version_sync_done > SYNC_FROM_VERSION:
-            latest_version = self.get_latest_orkl_version()
-            if latest_version > SYNC_FROM_VERSION and latest_version > version_sync_done:
-                all_entries = self.get_entries_from_version_id(version_sync_done)
-                sorted_entries = sorted(all_entries, key=lambda x: x["ID"])
-                entries_processed_count=0
-                for entry in sorted_entries:
-                    if(self.check_entries_processed_limit_reached(entries_processed_count)):
-                        info_msg = (
-                                            f"[CONVERTER] maximum processed entries limit reached for current run. Process rest of entries in next run..."
-                                        )
-                        self.helper.log_info(info_msg)
-                        break
-                    else:
-                        print(f"uncomment below code, perform entry sending..{entry['ID']} and {work_id}")
-                        entries_processed_count+=1 # remove this line later only for debugging
-                        
-                        # extract_complete=self.extract_reports_send_bundle(entry,work_id)
-                        # if extract_complete==True:
-                        #     entry_id=entry["ID"]
-                        #     self.update_version_sync_done(entry_id)
-                        #     entries_processed_count+=1
-                        #     info_msg = (
-                        #                     f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
-                        #                 )
-                        #     self.helper.log_info(info_msg)
-            else:
-                if SYNC_FROM_VERSION > latest_version:
-                    raise Exception(f"Version does not exist, check orkl_sync_from_version in config file. Latest version is {latest_version} and sync from version is {SYNC_FROM_VERSION}")
-                else:
-                    if latest_version==version_sync_done:
-                        msg = f"Data is already up to date. Latest version is {latest_version} and data sync done version is {SYNC_FROM_VERSION}"
-                        self.helper.log_info(msg)
-                    else:
-                        raise Exception(f"Unable to perform sync from version {SYNC_FROM_VERSION} to latest version {latest_version}. Please check the config file.")        
-        else:
-            if version_sync_done < SYNC_FROM_VERSION:
-                msg = f"sync from version is {SYNC_FROM_VERSION} and sync done version is : {version_sync_done}. Please change sync from version to >= {version_sync_done}"
-                self.helper.log_info(msg)
-                
-        return results
-
     def extract_reports_send_bundle(self,entry,work_id):
         result=False
         current_entry_reports=[]
         reports = entry.get("created_library_entries")
         entry_id=entry["ID"]
         if reports:
-            current_entry_reports+=self.process_reports(reports)
+            current_entry_reports+=self.get_reports_data(reports)
             if current_entry_reports is not None:
                 if(len(current_entry_reports) == 0):
                     # log message to OCTI when no reports found for entry id
@@ -236,7 +183,7 @@ class OrklConverter:
                                 update=self.config.update_existing_data,
                                 work_id=work_id,
                             )
-                            print("Completed extracting reports from {entry_id}")
+                            print(f"Completed extracting reports from {entry_id}")
                             #time.sleep(10)
                     result=True
             else:

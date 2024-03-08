@@ -88,7 +88,7 @@ class OrklConnector:
 
         orkl_params = self._update_orkl_params(start_date, now)
 
-        self.converter.perform_sync(work_id)
+        self.converter.perform_sync_from_year(work_id)
 
     def _import_history(
         self, start_date: datetime, end_date: datetime, work_id: str
@@ -139,7 +139,7 @@ class OrklConnector:
                         start_date_current_year, end_date_current_year
                     )
 
-                    self.converter.perform_sync(work_id)
+                    self.converter.perform_sync_from_year(work_id)
                     days_in_year = 0
 
                 """
@@ -152,7 +152,7 @@ class OrklConnector:
                         start_date_current_year, end_date_current_year
                     )
 
-                    self.converter.perform_sync(work_id)
+                    self.converter.perform_sync_from_year(work_id)
                     start_date_current_year += timedelta(days=MAX_AUTHORIZED)
                     days_in_year -= MAX_AUTHORIZED
                 else:
@@ -163,7 +163,7 @@ class OrklConnector:
                     orkl_params = self._update_orkl_params(
                         start_date_current_year, end_date_current_year
                     )
-                    self.converter.perform_sync(work_id)
+                    self.converter.perform_sync_from_year(work_id)
                     days_in_year = 0
 
             info_msg = f"[CONNECTOR] Importing orkl history for year {year} finished"
@@ -203,7 +203,9 @@ class OrklConnector:
             self.helper.metric.state("stopped")
             self.helper.force_ping()
             sys.exit(0)
-
+        # print("going to sleep for 600 seconds")
+        # time.sleep(600)
+        # print("woke up from sleep, waiting for next run...")
         self.helper.metric.state("idle")
         time.sleep(self.get_interval())
     
