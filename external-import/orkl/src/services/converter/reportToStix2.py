@@ -17,39 +17,11 @@ class OrklConverter:
         )
 
         self.author = self._create_author()
+
     def add_references():
         pass
 
-    def send_bundle(self, orkl_params: dict, work_id: str) -> None:
-        """
-        Send bundle to API
-        :param orkl_params: Dict of params
-        :param work_id: work id in string
-        :return:
-        """
 
-        report_objects = self.perform_sync(work_id, orkl_params)
-
-
-        # if len(software_objects) != 0:
-        #     vulnerabilities_bundle = self._to_stix_bundle(software_objects)
-        #     vulnerabilities_to_json = self._to_json_bundle(vulnerabilities_bundle)
-
-        #     # Retrieve the author object for the info message
-        #     info_msg = (
-        #         f"[CONVERTER] Sending bundle to server with {len(vulnerabilities_bundle)} objects, "
-        #         f"concerning {len(software_objects) - 1} vulnerabilities"
-        #     )
-        #     self.helper.log_info(info_msg)
-
-        #     self.helper.send_stix2_bundle(
-        #         vulnerabilities_to_json,
-        #         update=self.config.update_existing_data,
-        #         work_id=work_id,
-        #     )
-
-        # else:
-        #     pass
     
     def get_version_sync_done(self):
         root_dir = os.path.dirname(os.path.abspath(__file__))
