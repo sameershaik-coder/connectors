@@ -17,11 +17,6 @@ class OrklConverter:
         )
 
         self.author = self._create_author()
-
-    def add_references():
-        pass
-
-
     
     def get_version_sync_done(self):
         root_dir = os.path.dirname(os.path.abspath(__file__))
