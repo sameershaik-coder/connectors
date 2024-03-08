@@ -5,7 +5,9 @@ from datetime import datetime, timedelta
 from pycti import OpenCTIConnectorHelper  # type: ignore
 from services import OrklConverter  # type: ignore
 from services.utils import MAX_AUTHORIZED, ConfigOrkl  # type: ignore
-
+import os
+from services.utils import get_json_object_from_file,write_json_to_file
+from pathlib import Path
 
 class OrklConnector:
     def __init__(self):
@@ -248,13 +250,11 @@ class OrklConnector:
             else:
                 # running the connector for first time
                 last_run = None
+                msg = "[CONNECTOR] Connector has never run..."
+                self.helper.log_info(msg)
+                self.initialize_version_sync_done()
                 self.run_task(last_run)
-            
-            
-                
-            
-            
-
+        
         except (KeyboardInterrupt, SystemExit):
             msg = "[CONNECTOR] Connector stop..."
             self.helper.log_info(msg)
@@ -262,3 +262,12 @@ class OrklConnector:
         except Exception as e:
             error_msg = f"[CONNECTOR] Error while processing data: {str(e)}"
             self.helper.log_error(error_msg)
+
+    def initialize_version_sync_done(self):
+        curr_dir = os.path.dirname(os.path.abspath(__file__))
+        parent_dir = os.path.dirname(curr_dir)
+        path = Path(parent_dir)
+        FILE_DIR = path.parent.absolute()
+        file_path = str(FILE_DIR)+"/src/services/converter/sync_details.json"
+        result = {"version_sync_done": 0}
+        write_json_to_file(file_path,result)
