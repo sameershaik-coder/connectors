@@ -29,3 +29,12 @@ def get_json_object_from_file(file_path,key):
         raise json.JSONDecodeError("Error decoding JSON data.")
     except KeyError:
         raise KeyError(f"Key '{key}' not found in JSON data.")
+
+def write_json_to_file(file_path,result):
+    try:
+        with open(file_path, "w") as outfile:
+            json.dump(result, outfile)
+    except IOError as e:
+        raise Exception(
+                    f"Error updating version_sync_done to file with content - {result} with following exception: {e}"
+                )

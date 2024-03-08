@@ -6,7 +6,7 @@ from services.utils import APP_VERSION, ConfigOrkl  # type: ignore
 from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore
 import os, json
-from services.utils import get_json_object_from_file
+from services.utils import get_json_object_from_file,write_json_to_file
 
 class OrklConverter:
     def __init__(self, helper):
@@ -141,11 +141,9 @@ class OrklConverter:
                     self.update_version_sync_done(entry_id)
                     entries_processed_count+=1
                     info_msg = (
-                                    f"[CONVERTER] completed extracting and sending reports to OCTI for {entry_id}"
+                                    f"[CONVERTER] Completed extracting and sending reports to OCTI for {entry_id}"
                                 )
                     self.helper.log_info(info_msg)        
-        
-                
         return results
 
     def extract_reports_send_bundle(self,entry,work_id):
@@ -209,10 +207,8 @@ class OrklConverter:
         root_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = "sync_details.json"
         file_path = os.path.join(root_dir, file_path)
-        result = {}
-        result["version_sync_done"] = int(version)
-        with open(file_path, "w") as outfile:
-            json.dump(result, outfile)
+        result = {"version_sync_done": int(version)}
+        write_json_to_file(file_path,result)
 
     def check_and_replace_date(self, date_str):
         try:
@@ -220,8 +216,11 @@ class OrklConverter:
             datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
             # If parsing fails, replace the date with the current date
-            print("Invalid date format in {date_str}. Replacing with current date.")
-            #default_date_str = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+            info_msg = (
+                f"[CONVERTER] Invalid date format detected in {date_str} from orkl api. "
+                f"Replacing with none."
+            )
+            self.helper.log_info(info_msg)
             default_date_str = None
             return default_date_str
         else:
