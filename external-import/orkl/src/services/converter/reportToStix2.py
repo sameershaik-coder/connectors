@@ -6,6 +6,7 @@ from services.utils import APP_VERSION, ConfigOrkl  # type: ignore
 from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore
 import os, json
+from services.utils import get_json_object_from_file
 
 class OrklConverter:
     def __init__(self, helper):
@@ -22,9 +23,7 @@ class OrklConverter:
         root_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = "sync_details.json"
         file_path = os.path.join(root_dir, file_path)
-        with open(file_path, 'r') as json_file:
-        # Load the JSON data from the file
-            return json.load(json_file)["version_sync_done"]
+        return get_json_object_from_file(file_path,"version_sync_done")
     
     def get_latest_orkl_version(self):
         return int(self.client_api.get_latest_library_version()["data"]["ID"])
