@@ -211,20 +211,30 @@ class OrklConverter:
 
     def check_and_replace_date(self, date_str):
         try:
-            # Attempt to parse the date string
-            datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+            parsed_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
         except ValueError:
-            # If parsing fails, replace the date with the current date
-            info_msg = (
-                f"[CONVERTER] Invalid date format detected in {date_str} from orkl api. "
-                f"Replacing with none."
-            )
-            self.helper.log_info(info_msg)
-            default_date_str = None
-            return default_date_str
-        else:
-            # If parsing succeeds, return the original date
-            return date_str
+            parsed_date = self.check_valid_format_timezone(date_str)
+            if parsed_date is None:
+                # If parsing fails, log and return None
+                self.log_invalid_date(date_str)
+                return None
+        return parsed_date
+    
+    def check_valid_format_timezone(self, date_str):
+        try:
+            return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+        except ValueError:
+            # If parsing fails, log and return None
+            self.log_invalid_date(date_str)
+            return None
+
+    def log_invalid_date(self, date_str):
+        info_msg = (
+            f"[CONVERTER] Invalid date format detected in {date_str} from orkl api. "
+            f"Replacing with None."
+        )
+        self.helper.log_info(info_msg)
+        
 
     def resolve_source_names(self, source_name):
         shortname = source_name
