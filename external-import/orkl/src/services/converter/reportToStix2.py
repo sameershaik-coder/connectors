@@ -169,6 +169,7 @@ class OrklConverter:
 
                             # Retrieve the author object for the info message
                             info_msg = (
+                                f"[CONVERTER] "
                                 f"Sending bundle to server with {len(reports_bundle)} objects, "
                                 f"concerning {len(processed_object) - 1} reports"
                             )
@@ -179,12 +180,12 @@ class OrklConverter:
                                 update=self.config.update_existing_data,
                                 work_id=work_id,
                             )
-                            print(f"Completed extracting reports from {entry_id}")
+                            print(f"[CONVERTER] Completed extracting reports from {entry_id}")
                             #time.sleep(10)
                     result=True
             else:
                 raise Exception(
-                    "Attempting to extract reports from entry failed. " "Wait for connector to re-run..."
+                    f"[CONVERTER] Attempting to extract reports from entry failed. " "Wait for connector to re-run..."
                 )
         else:
         # log message to OCTI when no reports found for entry id
