@@ -2,3 +2,4 @@ pycti
 requests
 stix2
 urllib3
+jsonpickle

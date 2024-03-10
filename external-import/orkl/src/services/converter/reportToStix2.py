@@ -7,6 +7,7 @@ from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore
 import os, json
 from services.utils import get_json_object_from_file,write_json_to_file
+import jsonpickle
 
 class OrklConverter:
     def __init__(self, helper):
@@ -268,8 +269,14 @@ class OrklConverter:
                                             },
                                         )
         if len(ta_objs) > 0:
-            print(f"ThreatActor {name} already exists in the opencti")
-            ta_obj = ta_objs[0]
+            # check if return obj is a valid type of threat actor
+            id = ta_objs[0].get("standard_id")
+            if(id is not None):
+                if("threat-actor" in id):
+                    print(f"ThreatActor {name} already exists in the opencti")
+                    ta_obj = ta_objs[0]
+                else:
+                    ta_obj = None        
         return ta_obj
 
     def process_object(self, object: dict) -> list:
