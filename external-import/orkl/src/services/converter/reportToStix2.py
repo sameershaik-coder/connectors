@@ -241,6 +241,36 @@ class OrklConverter:
         if ":" in source_name:
             shortname = source_name.split(":")[0]
         return shortname
+    
+    def check_if_source_exists(self, name:str):
+        identity_obj = None
+        identities = self.helper.api.stix_domain_object.list(
+                                            types=["Identity"],
+                                            filters={
+                                                "mode": "and",
+                                                "filters": [{"key": "name", "values": [name]}],
+                                                "filterGroups": [],
+                                            },
+                                        )
+        if len(identities) > 0:
+            print(f"Identity {name} already exists in the opencti")
+            identity_obj = identities[0]
+        return identity_obj
+    
+    def check_if_threat_actor_exists(self, name:str):
+        ta_obj = None
+        ta_objs = self.helper.api.stix_domain_object.list(
+                                            types=["ThreatActorGroup","ThreatActorIndividual","ThreatActor"],
+                                            filters={
+                                                "mode": "and",
+                                                "filters": [{"key": "name", "values": [name]}],
+                                                "filterGroups": [],
+                                            },
+                                        )
+        if len(ta_objs) > 0:
+            print(f"ThreatActor {name} already exists in the opencti")
+            ta_obj = ta_objs[0]
+        return ta_obj
 
     def process_object(self, object: dict) -> list:
         trimmed_list = object
@@ -282,20 +312,36 @@ class OrklConverter:
         threat_actor_source_objects = []
         threat_actors_tools_objects=[]
         if len(threat_actors) > 0:
+            existing_threat_actors=[]
             for threat_actor in threat_actors:
                 # create threat actor tools objects
                 tools = threat_actor["tools"]
                 if tools:
                     for tool in tools:
-                        # Create tool object
-                        tool_obj = stix2.Tool(
-                            id=Tool.generate_id(tool),
-                            name=tool,
-                            labels="orkl-threat-actor-tool",
-                            allow_custom=True,
-                        )
-                        #threat_actors_tools.append(tool_obj)
-                        threat_actors_tools_objects.append(tool_obj)
+                        existing_tools_objects=[]
+                        # check if tool exists
+                        tools = self.helper.api.stix_domain_object.list(
+                                            types=["Tools"],
+                                            filters={
+                                                "mode": "and",
+                                                "filters": [{"key": "name", "values": [tool]}],
+                                                "filterGroups": [],
+                                            },
+                                        )
+                        if len(tools) > 0:
+                            print(f"Tool {tool} already exists in the opencti")
+                            tool_obj = tools[0]
+                            existing_tools_objects.append(tool_obj)
+                        else:
+                            # Create tool object
+                            tool_obj = stix2.Tool(
+                                id=Tool.generate_id(tool),
+                                name=tool,
+                                labels="orkl-threat-actor-tool",
+                                allow_custom=True,
+                            )
+                            #threat_actors_tools.append(tool_obj)
+                            threat_actors_tools_objects.append(tool_obj)
 
                 threat_actor_aliases = threat_actor["aliases"]
                 threat_actor_obj_description = ""
@@ -303,39 +349,53 @@ class OrklConverter:
                 # create threat actor source object
                 
                 threat_actor_source_name = self.resolve_source_names(threat_actor["source_name"])
-                threat_actor_source = stix2.Identity(
-                                    id=Identity.generate_id(threat_actor_source_name, "organization"),
-                                    name=threat_actor_source_name,
-                                    created_by_ref=self.author.id,
-                                )
-                threat_actor_source_objects.append(threat_actor_source)
-
-                # create threat actor object
-                threat_actor_obj = stix2.ThreatActor(
-                    id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
-                    name=threat_actor["main_name"],
-                    description=threat_actor_obj_description,
-                    created=threat_actor["created_at"],
-                    modified=threat_actor["updated_at"],
-                    labels="orkl-threat-actor",
-                    #object_refs=[threat_actor_source.id]+threat_actors_tools_ids,
-                    created_by_ref=threat_actor_source.id,
-                    custom_properties={
-                        "x_opencti_description": threat_actor_obj_description,
-                        "x_opencti_score": 50,
-                        "x_opencti_aliases": threat_actor_aliases,
-                    },
-                    allow_custom=True,
-                )
-                threat_actor_objects.append(threat_actor_obj)
+                threat_actor_source_id = None
+                threat_actor_source = self.check_if_source_exists(threat_actor_source_name)
+                if(threat_actor_source is None):
+                    threat_actor_source = stix2.Identity(
+                                        id=Identity.generate_id(threat_actor_source_name, "organization"),
+                                        name=threat_actor_source_name,
+                                        created_by_ref=self.author.id,
+                                    )
+                    threat_actor_source_objects.append(threat_actor_source)
+                    threat_actor_source_id = threat_actor_source.id
+                else:
+                    threat_actor_source_id = threat_actor_source["standard_id"]
+                    
+                existing_threat_actor = self.check_if_threat_actor_exists(threat_actor["main_name"])
+                threat_actor_id = None
+                if(existing_threat_actor is None):
+                    # create threat actor object
+                    threat_actor_obj = stix2.ThreatActor(
+                        id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
+                        name=threat_actor["main_name"],
+                        description=threat_actor_obj_description,
+                        created=threat_actor["created_at"],
+                        modified=threat_actor["updated_at"],
+                        labels="orkl-threat-actor",
+                        created_by_ref=threat_actor_source_id,
+                        custom_properties={
+                            "x_opencti_description": threat_actor_obj_description,
+                            "x_opencti_score": 50,
+                            "x_opencti_aliases": threat_actor_aliases,
+                        },
+                        allow_custom=True,
+                    )
+                    threat_actor_objects.append(threat_actor_obj)
+                    threat_actor_id = threat_actor_obj.id
+                else:
+                    threat_actor_id = existing_threat_actor["standard_id"]
+                    existing_threat_actors.append(existing_threat_actor)
+                    
 
                 # create relationship between threat actor and tools
                 if tools:
                     for tool in threat_actors_tools_objects[:10]:
-                        relationship = self._create_relationship(threat_actor_obj.id, tool.id, "uses")
+                        relationship = self._create_relationship(threat_actor_id, tool.id, "uses")
                         threat_actor_relationship_objects.append(relationship)
-                        #result.append(relationship)
-                        #all_relationships_ids.append(relationship.id)
+                    for tool in existing_tools_objects:
+                        relationship = self._create_relationship(threat_actor_id, tool["standard_id"], "uses")
+                        threat_actor_relationship_objects.append(relationship)
                 
         if "files" in report:
             report_source_name = self.resolve_source_names(sources[0]["name"])
@@ -408,12 +468,14 @@ class OrklConverter:
         for report_source in report_source_objects:
             result.append(report_source)
         
-        
+        # for existing_ta in existing_threat_actors:
+        #     report_object_references.append(existing_ta)
+                    
         # Check if the length of report_object_references is 0
         if len(report_object_references) == 0:
             # append report source as reference for the report
-            report_object_references.append(report_source)  
-            
+            report_object_references.append(report_source)
+                
         report = stix2.Report(
             id=Report.generate_id(report_name,created_at),
             name=report_name,
