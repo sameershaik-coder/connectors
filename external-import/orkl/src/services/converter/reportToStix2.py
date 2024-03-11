@@ -209,17 +209,37 @@ class OrklConverter:
         file_path = os.path.join(root_dir, file_path)
         result = {"version_sync_done": int(version)}
         write_json_to_file(file_path,result)
-
-    def check_and_replace_date(self, date_str):
+        
+    def is_invalid_date(self,date_string):
         try:
-            parsed_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+            # Convert the string to a datetime object
+            date_object = datetime.fromisoformat(date_string)
+            # Define the range of invalid dates
+            invalid_date_range_start = datetime(1900, 1, 1, 0, 0, 0)
+            invalid_date_range_end = datetime(9999, 12, 31, 23, 59, 59)
+            # Check if the date falls within the invalid range
+            if invalid_date_range_start <= date_object <= invalid_date_range_end:
+                return True
+            else:
+                return False
         except ValueError:
-            parsed_date = self.check_valid_format_timezone(date_str)
-            if parsed_date is None:
-                # If parsing fails, log and return None
-                self.log_invalid_date(date_str)
-                return None
-        return parsed_date
+            # Handle the case where the string is not a valid ISO format
+            return True
+    
+    def check_and_handle_date_formats(self, date_str):
+        invalid_date = self.is_invalid_date(date_str)
+        if invalid_date:
+            return None
+        else:
+            try:
+                parsed_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+            except ValueError:
+                parsed_date = self.check_valid_format_timezone(date_str)
+                if parsed_date is None:
+                    # If parsing fails, log and return None
+                    self.log_invalid_date(date_str)
+                    return None
+            return parsed_date
     
     def check_valid_format_timezone(self, date_str):
         try:
@@ -290,16 +310,16 @@ class OrklConverter:
 
         id = report["id"]
         created_at = report["created_at"]
-        created_at = self.check_and_replace_date(created_at)
+        created_at = self.check_and_handle_date_formats(created_at)
         updated_at = report["updated_at"]
         deleted_at = report["deleted_at"]
         sha1_hash = report["sha1_hash"]
         title = report["title"]
         authors = report["authors"]
         file_creation_date = report["file_creation_date"]
-        file_creation_date=self.check_and_replace_date(file_creation_date)
+        file_creation_date=self.check_and_handle_date_formats(file_creation_date)
         file_modification_date = report["file_modification_date"]
-        file_modification_date=self.check_and_replace_date(file_modification_date)
+        file_modification_date=self.check_and_handle_date_formats(file_modification_date)
         file_size = report["file_size"]
         plain_text = report["plain_text"]
         language = report["language"]
@@ -308,6 +328,11 @@ class OrklConverter:
         report_names = report["report_names"]
         threat_actors = report["threat_actors"]
 
+        if created_at is None:
+            if file_creation_date is None:
+                created_at = datetime.now()
+            else:
+                created_at = file_creation_date
 
         event_markings = []
 
