@@ -382,7 +382,7 @@ class OrklConverter:
                             all_tools_names.append(tool)
 
                 threat_actor_aliases = threat_actor["aliases"]
-                threat_actor_obj_description = ""
+                threat_actor_obj_description = "Also known as [aliases] : " + str(threat_actor_aliases) + "\n"
 
                 # create threat actor source object
                 
@@ -400,13 +400,6 @@ class OrklConverter:
                 else:
                     threat_actor_source_id = threat_actor_source["standard_id"]
                 
-                # process threat actor aliases
-                existing_aliases=[]
-                for alias in threat_actor_aliases:
-                    existing_threat_actor = self.check_if_threat_actor_exists(alias)
-                    if existing_threat_actor is not None:
-                        existing_aliases.append(alias)
-                
                 # process threat actors    
                 existing_threat_actor = self.check_if_threat_actor_exists(threat_actor["main_name"])
                 threat_actor_id = None
@@ -422,8 +415,7 @@ class OrklConverter:
                         created_by_ref=threat_actor_source_id,
                         custom_properties={
                             "x_opencti_description": threat_actor_obj_description,
-                            "x_opencti_score": 50,
-                            "x_opencti_aliases": existing_aliases,
+                            "x_opencti_score": 50
                         },
                         allow_custom=True,
                     )
