@@ -298,7 +298,7 @@ class OrklConverter:
                 else:
                     ta_obj = None        
         return ta_obj
-
+    
     def process_object(self, object: dict) -> list:
         trimmed_list = object
 
@@ -343,6 +343,8 @@ class OrklConverter:
         threat_actor_relationship_objects = []
         threat_actor_source_objects = []
         threat_actors_tools_objects=[]
+        all_tools_ids=[]
+        all_tools_names=[]
         if len(threat_actors) > 0:
             existing_threat_actors=[]
             for threat_actor in threat_actors:
@@ -350,30 +352,34 @@ class OrklConverter:
                 tools = threat_actor["tools"]
                 if tools:
                     for tool in tools:
-                        existing_tools_objects=[]
-                        # check if tool exists
-                        tools = self.helper.api.stix_domain_object.list(
-                                            types=["Tools"],
-                                            filters={
-                                                "mode": "and",
-                                                "filters": [{"key": "name", "values": [tool]}],
-                                                "filterGroups": [],
-                                            },
-                                        )
-                        if len(tools) > 0:
-                            print(f"Tool {tool} already exists in the opencti")
-                            tool_obj = tools[0]
-                            existing_tools_objects.append(tool_obj)
-                        else:
-                            # Create tool object
-                            tool_obj = stix2.Tool(
-                                id=Tool.generate_id(tool),
-                                name=tool,
-                                labels="orkl-threat-actor-tool",
-                                allow_custom=True,
-                            )
-                            #threat_actors_tools.append(tool_obj)
-                            threat_actors_tools_objects.append(tool_obj)
+                        if tool not in all_tools_names:
+                            existing_tools_objects=[]
+                            # check if tool exists
+                            tools = self.helper.api.stix_domain_object.list(
+                                                types=["Tools"],
+                                                filters={
+                                                    "mode": "and",
+                                                    "filters": [{"key": "name", "values": [tool]}],
+                                                    "filterGroups": [],
+                                                },
+                                            )
+                            if len(tools) > 0:
+                                print(f"Tool {tool} already exists in the opencti")
+                                tool_obj = tools[0]
+                                existing_tools_objects.append(tool_obj)
+                                if(tool_obj["standard_id"] not in all_tools_ids):
+                                    all_tools_ids.append(tool_obj["standard_id"])
+                            else:
+                                # Create tool object
+                                tool_obj = stix2.Tool(
+                                    id=Tool.generate_id(tool),
+                                    name=tool,
+                                    labels="orkl-threat-actor-tool",
+                                    allow_custom=True,
+                                )
+                                all_tools_ids.append(tool_obj.id)
+                                threat_actors_tools_objects.append(tool_obj)
+                            all_tools_names.append(tool)
 
                 threat_actor_aliases = threat_actor["aliases"]
                 threat_actor_obj_description = ""
@@ -393,7 +399,15 @@ class OrklConverter:
                     threat_actor_source_id = threat_actor_source.id
                 else:
                     threat_actor_source_id = threat_actor_source["standard_id"]
-                    
+                
+                # process threat actor aliases
+                existing_aliases=[]
+                for alias in threat_actor_aliases:
+                    existing_threat_actor = self.check_if_threat_actor_exists(alias)
+                    if existing_threat_actor is not None:
+                        existing_aliases.append(alias)
+                
+                # process threat actors    
                 existing_threat_actor = self.check_if_threat_actor_exists(threat_actor["main_name"])
                 threat_actor_id = None
                 if(existing_threat_actor is None):
@@ -409,7 +423,7 @@ class OrklConverter:
                         custom_properties={
                             "x_opencti_description": threat_actor_obj_description,
                             "x_opencti_score": 50,
-                            "x_opencti_aliases": threat_actor_aliases,
+                            "x_opencti_aliases": existing_aliases,
                         },
                         allow_custom=True,
                     )
