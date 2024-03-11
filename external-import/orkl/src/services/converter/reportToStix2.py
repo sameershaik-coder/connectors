@@ -328,29 +328,17 @@ class OrklConverter:
         report_names = report["report_names"]
         threat_actors = report["threat_actors"]
 
-        # build report info
-        # report_info = "Additional information about report : " + "\n"
-        # report_info += "orkl id: " + (id if id is not None else "N/A") + "\n"
-        # report_info += "report created date : " + (created_at if created_at is not None else "N/A") + "\n"
-        # report_info += "report updated date : " + (updated_at if updated_at is not None else "N/A") + "\n"
-        # report_info += "report deleted date : " + (deleted_at if deleted_at is not None else "N/A") + "\n"
-        # report_info += "report sha1_hash : " + (sha1_hash if sha1_hash is not None else "N/A") + "\n"
-        # report_info += "report title : " + (title if title is not None else "N/A") + "\n"
-        # report_info += "report authors : " + (authors if authors is not None else "N/A") + "\n"
-        # report_info += "report file_size : " + (str(file_size) if file_size is not None else "N/A") + "\n"
-        # report_info += "report language : " + (language if language is not None else "N/A") + "\n"
-        
         info = [
-            "Additional information about report :",
-            f"orkl id: {id if id is not None else 'N/A'}",
-            f"report created date : {created_at if created_at is not None else 'N/A'}",
-            f"report updated date : {updated_at if updated_at is not None else 'N/A'}",
-            f"report deleted date : {deleted_at if deleted_at is not None else 'N/A'}",
-            f"report sha1_hash : {sha1_hash if sha1_hash is not None else 'N/A'}",
-            f"report title : {title if title is not None else 'N/A'}",
-            f"report authors : {authors if authors is not None else 'N/A'}",
-            f"report file_size : {file_size if file_size is not None else 'N/A'}",
-            f"report language : {language if language is not None else 'N/A'}"
+            "Additional details about report :",
+            f"orkl id: {id if (id is not None and id != '') else 'N/A'}",
+            f"report created date : {created_at if (created_at is not None and created_at != '') else 'N/A'}",
+            f"report updated date : {updated_at if (updated_at is not None and updated_at != '') else 'N/A'}",
+            f"report deleted date : {deleted_at if (deleted_at is not None and deleted_at != '') else 'N/A'}",
+            f"report sha1_hash : {sha1_hash if (sha1_hash is not None and sha1_hash != '') else 'N/A'}",
+            f"report title : {title if (title is not None and title != '') else 'N/A'}",
+            f"report authors : {authors if (authors is not None and authors != '') else 'N/A'}",
+            f"report file_size : {file_size if (file_size is not None and file_size != '') else 'N/A'}",
+            f"report language : {language if (language is not None and language != '') else 'N/A'}"
         ]
         report_info = '\n\n'.join(info)
 
@@ -561,6 +549,7 @@ class OrklConverter:
             report_object_references.append(report_source)
             
         report_description = report_info + "\n\n"
+        report_description += "Report Content Text :" + "\n\n"   
         report_description += plain_text    
         
         report = stix2.Report(

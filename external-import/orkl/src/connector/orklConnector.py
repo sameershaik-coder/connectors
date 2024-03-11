@@ -206,8 +206,8 @@ class OrklConnector:
             self.helper.force_ping()
             sys.exit(0)
         # Sleep during debugging    
-        print("going to sleep for 500 seconds")
-        time.sleep(500)
+        print("going to sleep for 1200 seconds")
+        time.sleep(1200)
         print("woke up from sleep, waiting for next run...")
         
         self.helper.metric.state("idle")
