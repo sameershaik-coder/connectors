@@ -212,6 +212,9 @@ class OrklConverter:
         
     def is_invalid_date(self,date_string):
         try:
+            # check if there is z in string
+            if "Z" in date_string:
+                date_string = date_string[:-1]
             # Convert the string to a datetime object
             date_object = datetime.fromisoformat(date_string)
             # Define the range of invalid dates
@@ -226,20 +229,45 @@ class OrklConverter:
             # Handle the case where the string is not a valid ISO format
             return True
     
+    def check_date_is_in_franctional_format(self, date_str):
+        result = None
+        try:
+            if "Z" in date_str:
+                date_str = date_str[:-1]
+            # Convert the string to a datetime object
+            date_object = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%S.%f')
+            # Extract the date part
+            result = date_object
+            print("Converted date:", result)
+        except ValueError:
+            print("Invalid date format")
+        return result
+    
     def check_and_handle_date_formats(self, date_str):
-        invalid_date = self.is_invalid_date(date_str)
-        if invalid_date:
-            return None
+        format_completed=False
+        result = self.check_date_is_in_franctional_format(date_str)
+        if result is None:
+            result = self.check_valid_format_timezone(date_str)
+            if result is not None:
+                format_completed = True
         else:
-            try:
-                parsed_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-            except ValueError:
-                parsed_date = self.check_valid_format_timezone(date_str)
-                if parsed_date is None:
-                    # If parsing fails, log and return None
-                    self.log_invalid_date(date_str)
-                    return None
-            return parsed_date
+            format_completed=True
+        return result
+            
+        
+        # invalid_date = self.is_invalid_date(date_str)
+        # if invalid_date:
+        #     return None
+        # else:
+        #     try:
+        #         parsed_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+        #     except ValueError:
+        #         parsed_date = self.check_valid_format_timezone(date_str)
+        #         if parsed_date is None:
+        #             # If parsing fails, log and return None
+        #             self.log_invalid_date(date_str)
+        #             return None
+        #     return parsed_date
     
     def check_valid_format_timezone(self, date_str):
         try:
