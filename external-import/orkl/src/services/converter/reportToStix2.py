@@ -445,29 +445,8 @@ class OrklConverter:
                     threat_actor_source_id = threat_actor_source["standard_id"]
                 
                 # process threat actors    
-                #existing_threat_actor = self.check_if_threat_actor_exists(threat_actor["main_name"])
                 threat_actor_id = None
-                # if(existing_threat_actor is None):
-                #     # create threat actor object
-                #     threat_actor_obj = stix2.ThreatActor(
-                #         id=ThreatActorIndividual.generate_id(threat_actor["main_name"]),
-                #         name=threat_actor["main_name"],
-                #         description=threat_actor_obj_description,
-                #         created=threat_actor["created_at"],
-                #         modified=threat_actor["updated_at"],
-                #         labels="orkl-threat-actor",
-                #         created_by_ref=threat_actor_source_id,
-                #         custom_properties={
-                #             "x_opencti_description": threat_actor_obj_description,
-                #             "x_opencti_score": 50
-                #         },
-                #         allow_custom=True,
-                #     )
-                #     threat_actor_objects.append(threat_actor_obj)
-                #     threat_actor_id = threat_actor_obj.id
-                # else:
-                #     threat_actor_id = existing_threat_actor["standard_id"]
-                #     existing_threat_actors.append(existing_threat_actor)
+               
                 
                 # create threat actor object
                 threat_actor_obj = stix2.ThreatActor(
