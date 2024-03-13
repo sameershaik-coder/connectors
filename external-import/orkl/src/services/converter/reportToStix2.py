@@ -357,7 +357,7 @@ class OrklConverter:
         threat_actors = report["threat_actors"]
         
         
-        if(created_at == datetime(1, 1, 1) or file_creation_date == datetime(1, 1, 1)):
+        if(created_at == datetime(1, 1, 1) or file_creation_date == datetime(1, 1, 1) or file_modification_date == datetime(1, 1, 1)):
             if created_at is not None:
                 file_creation_date = created_at
                 file_modification_date = created_at
