@@ -472,9 +472,6 @@ class OrklConverter:
                     for tool in threat_actors_tools_objects:
                         relationship = self._create_relationship(threat_actor_id, tool.id, "uses")
                         threat_actor_relationship_objects.append(relationship)
-                    # for tool in existing_tools_objects:
-                    #     relationship = self._create_relationship(threat_actor_id, tool["standard_id"], "uses")
-                    #     threat_actor_relationship_objects.append(relationship)
                 
         if "files" in report:
             report_source_name = self.resolve_source_names(sources[0]["name"])
@@ -546,9 +543,6 @@ class OrklConverter:
         
         for report_source in report_source_objects:
             result.append(report_source)
-        
-        # for existing_ta in existing_threat_actors:
-        #     report_object_references.append(existing_ta)
                     
         # Check if the length of report_object_references is 0
         if len(report_object_references) == 0:
