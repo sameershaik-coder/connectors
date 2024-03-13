@@ -501,25 +501,31 @@ class OrklConverter:
 
         report_source_objects=[]
         if len(sources) > 0:
-            custom_properties = {
-                    "x_opencti_description": sources[0]["description"],
-                    "x_opencti_score": 50,
-                    "labels": ["orkl-report-source"],
-                    "created_by_ref": self.author.id,
-                    "external_references": [],
-                }
+            # check if an identity already exits in OCTI
+            existing_source_octi_object = self.check_if_source_exists(sources[0]["name"])
+            # create a stix identity object if it doesn't exist
+            if(existing_source_octi_object is None):
+                custom_properties = {
+                        "x_opencti_description": sources[0]["description"],
+                        "x_opencti_score": 50,
+                        "labels": ["orkl-report-source"],
+                        "created_by_ref": self.author.id,
+                        "external_references": [],
+                    }
 
-            if sources[0]["name"] != None:
-                report_source_name = self.resolve_source_names(sources[0]["name"])
-                source_object = stix2.Identity(
-                id=Identity.generate_id(report_source_name, "organization"),
-                name=report_source_name,
-                description=sources[0]["description"],
-                created_by_ref=self.author.id,
-                custom_properties=custom_properties,
-                allow_custom=True,
-            )
-                report_source_objects.append(source_object)
+                if sources[0]["name"] != None:
+                    report_source_name = self.resolve_source_names(sources[0]["name"])
+                    source_object = stix2.Identity(
+                    id=Identity.generate_id(report_source_name, "organization"),
+                    name=report_source_name,
+                    description=sources[0]["description"],
+                    created_by_ref=self.author.id,
+                    custom_properties=custom_properties,
+                    allow_custom=True)
+                    report_source_objects.append(source_object)
+                    report_source_id=source_object.id
+            else:
+                report_source_id=existing_source_octi_object["standard_id"]
             
         # create report object
         report_object_references = []
@@ -545,9 +551,25 @@ class OrklConverter:
             result.append(report_source)
                     
         # Check if the length of report_object_references is 0
+        # This means report does not have any references or has only existing OCTI references
+        # This case needs to be handled so that report_object_references is not empty
         if len(report_object_references) == 0:
-            # append report source as reference for the report
-            report_object_references.append(report_source)
+            # First check if we can add report source objects
+            if len(report_source_objects) > 0:
+                report_source = report_source_objects[0]
+                report_object_references.append(report_source)
+            else:
+                # if report source object doesn't exist, probably because it was already existing in OCTI create a new one
+                if sources[0]["name"] != None:
+                    report_source_name = self.resolve_source_names(sources[0]["name"])
+                    source_object = stix2.Identity(
+                    id=Identity.generate_id(report_source_name, "organization"),
+                    name=report_source_name,
+                    description=sources[0]["description"],
+                    created_by_ref=self.author.id,
+                    custom_properties=custom_properties,
+                    allow_custom=True)
+                    report_object_references.append(source_object)
             
         report_description = report_info + "\n\n"
         report_description += "Report Content Text :" + "\n\n"   
@@ -560,7 +582,7 @@ class OrklConverter:
             published=created_at,
             created=file_creation_date,
             modified=file_modification_date,
-            created_by_ref = source_object.id,
+            created_by_ref = report_source_id,
             report_types=["orkl-report"],
             object_marking_refs=event_markings,
             object_refs=report_object_references,
