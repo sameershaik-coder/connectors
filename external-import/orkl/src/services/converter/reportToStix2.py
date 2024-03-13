@@ -355,6 +355,16 @@ class OrklConverter:
         references = report["references"]
         report_names = report["report_names"]
         threat_actors = report["threat_actors"]
+        
+        
+        if(created_at == datetime(1, 1, 1) or file_creation_date == datetime(1, 1, 1)):
+            if created_at is not None:
+                file_creation_date = created_at
+                file_modification_date = created_at
+            else:
+                created_at = datetime.now()
+                file_creation_date = datetime.now()
+                file_modification_date = datetime.now()
 
         info = [
             "Additional details about report :",
@@ -369,14 +379,6 @@ class OrklConverter:
             f"report language : {language if (language is not None and language != '') else 'N/A'}"
         ]
         report_info = '\n\n'.join(info)
-
-        
-
-        if created_at is None:
-            if file_creation_date is None:
-                created_at = datetime.now()
-            else:
-                created_at = file_creation_date
 
         event_markings = []
 
@@ -560,6 +562,13 @@ class OrklConverter:
                 report_object_references.append(report_source)
             else:
                 # if report source object doesn't exist, probably because it was already existing in OCTI create a new one
+                custom_properties = {
+                        "x_opencti_description": sources[0]["description"],
+                        "x_opencti_score": 50,
+                        "labels": ["orkl-report-source"],
+                        "created_by_ref": self.author.id,
+                        "external_references": [],
+                    }
                 if sources[0]["name"] != None:
                     report_source_name = self.resolve_source_names(sources[0]["name"])
                     source_object = stix2.Identity(
