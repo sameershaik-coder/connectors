@@ -297,25 +297,6 @@ class OrklConverter:
         file_path = os.path.join(root_dir, file_path)
         result = {"version_sync_done": int(version)}
         write_json_to_file(file_path,result)
-        
-    # def is_invalid_date(self,date_string):
-    #     try:
-    #         # check if there is z in string
-    #         if "Z" in date_string:
-    #             date_string = date_string[:-1]
-    #         # Convert the string to a datetime object
-    #         date_object = datetime.fromisoformat(date_string)
-    #         # Define the range of invalid dates
-    #         invalid_date_range_start = datetime(1900, 1, 1, 0, 0, 0)
-    #         invalid_date_range_end = datetime(9999, 12, 31, 23, 59, 59)
-    #         # Check if the date falls within the invalid range
-    #         if invalid_date_range_start <= date_object <= invalid_date_range_end:
-    #             return True
-    #         else:
-    #             return False
-    #     except ValueError:
-    #         # Handle the case where the string is not a valid ISO format
-    #         return True
     
     def check_date_is_in_franctional_format(self, date_str):
         """
@@ -683,7 +664,7 @@ class OrklConverter:
             result.append(report_source)
                     
         # Check if the length of report_object_references is 0
-        # sometimes this happens when there are no tools and threat actors so we need to handle that
+        # Sometimes this happens when there are no tools and threat actors so we need to handle that
         # This means report does not have any references or has only existing OCTI references
         # This case needs to be handled so that report_object_references is not empty
         if len(report_object_references) == 0:
