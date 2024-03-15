@@ -328,6 +328,13 @@ class OrklConverter:
         return ta_obj
     
     def process_object(self, object: dict) -> list:
+        """
+        A function that processes an object and returns a list of results. 
+        The function performs various operations on the input object, 
+        such as creating external references, threat actor objects, report source objects, and report objects. 
+        It also handles date formats and checks for existing tools and identities.
+        The function returns a list of results.
+        """
         trimmed_list = object
 
         result = []
@@ -337,17 +344,14 @@ class OrklConverter:
         report = trimmed_list
 
         id = report["id"]
-        created_at = report["created_at"]
-        created_at = self.check_and_handle_date_formats(created_at)
+        created_at = self.check_and_handle_date_formats(report.get("created_at", ""))
         updated_at = report["updated_at"]
         deleted_at = report["deleted_at"]
         sha1_hash = report["sha1_hash"]
         title = report["title"]
         authors = report["authors"]
-        file_creation_date = report["file_creation_date"]
-        file_creation_date=self.check_and_handle_date_formats(file_creation_date)
-        file_modification_date = report["file_modification_date"]
-        file_modification_date=self.check_and_handle_date_formats(file_modification_date)
+        file_creation_date = self.check_and_handle_date_formats(report.get("file_creation_date", ""))
+        file_modification_date = self.check_and_handle_date_formats(report.get("file_modification_date", ""))
         file_size = report["file_size"]
         plain_text = report["plain_text"]
         language = report["language"]
