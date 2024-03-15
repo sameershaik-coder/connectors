@@ -360,8 +360,9 @@ class OrklConverter:
         report_names = report["report_names"]
         threat_actors = report["threat_actors"]
         
-        
+        # check if the date is invalid from orkl
         if(created_at == datetime(1, 1, 1) or file_creation_date == datetime(1, 1, 1) or file_modification_date == datetime(1, 1, 1)):
+            # if we have a valid date then use it, else use current date
             if created_at is not None:
                 file_creation_date = created_at
                 file_modification_date = created_at
@@ -396,7 +397,6 @@ class OrklConverter:
         all_tools_ids=[]
         all_tools_names=[]
         if len(threat_actors) > 0:
-            existing_threat_actors=[]
             for threat_actor in threat_actors:
                 # create threat actor tools objects
                 tools = threat_actor["tools"]
