@@ -21,59 +21,104 @@ class OrklConverter:
         self.author = self._create_author()
     
     def get_version_sync_done(self):
+        """
+        A function that retrieves the version sync done entryid from previous run from a JSON file.
+        """
         root_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = "sync_details.json"
         file_path = os.path.join(root_dir, file_path)
         return get_json_object_from_file(file_path,"version_sync_done")
     
     def get_latest_orkl_version(self):
+        """
+        This function retrieves the latest version of the ORKL library by querying the client API. 
+        It then extracts and returns the ID of the latest version as an integer.
+        """
         return int(self.client_api.get_latest_library_version()["data"]["ID"])
     
     
     def get_entries_from_year(self, from_year) -> list:
+        """
+        Get entries from a specific year and return them as a list.
+        
+        Parameters:
+            from_year (int): The year from which to retrieve the entries.
+        
+        Returns:
+            list: A list of entries from the specified year.
+        """
         limit = 100
         offset = 0
         entries_data = []
 
         while True:
+            # get library entries from orkl based on limit and offset
             data = self.client_api.get_library_work_items(limit, offset)
             
+            # if no data is returned, it means that no more entries are available which require sync
             if data is None:
                 break
-
-            all_entries = data["data"]["entries"]
-            filtered_entries = [entry for entry in all_entries if self.is_entry_from_year(entry, from_year)]
             
+            all_entries = data["data"]["entries"]
+            # check if there are entries which are created from the year in config
+            filtered_entries = [entry for entry in all_entries if self.is_entry_from_year(entry, from_year)]
+            # add the filtered entries to the list
             entries_data += filtered_entries
+            # update the offset
             offset += limit
             
+            # if there are entries that are not from the year in config, break
             if len(filtered_entries) == 0:
                 break
 
         return entries_data
 
     def is_entry_from_year(self, entry, from_year) -> bool:
+        """
+        Check if the entry is from a created from year in config.
+
+        Parameters:
+            entry (dict): The entry to check.
+            from_year (int): The year to compare against.
+
+        Returns:
+            bool: True if the entry is from the specified year, False otherwise.
+        """
         entry_year = datetime.strptime(entry['CreatedAt'], '%Y-%m-%dT%H:%M:%S.%fZ').year
         return entry_year >= from_year
     
     def get_entries_from_version_id(self, from_version_id) -> list:
+        """
+        Retrieves entries from a specific version ID and returns a list of entries.
+
+        Parameters:
+            from_version_id (int): The ID from which to start retrieving entries.
+
+        Returns:
+            list: A list of entries starting from the specified version ID.
+        """
         limit = 100
         offset = 0
         entries_data = []
 
         while True:
+            # get library entries from orkl based on limit and offset
             data = self.client_api.get_library_work_items(limit, offset)
             
+            # if no data is returned, it means that no more entries are available which require sync
             if data is None:
                 break
 
             all_entries = data["data"]["entries"]
+            # check if there are entries whose entry id is greater than from_version_id
             id_exists = self.check_version_id_exists(from_version_id, all_entries)
             
+            # if there are entries whose entry id is greater than from_version_id, add them to the list entries_data
             if id_exists:
                 filtered_entries = [entry for entry in all_entries if entry.get('ID') > from_version_id]
                 entries_data += filtered_entries
                 break
+            # if there are no entries whose entry id is greater than from_version_id, then update the offset and repeat the loop
             else:
                 entries_data += all_entries
                 offset += limit
@@ -81,9 +126,25 @@ class OrklConverter:
         return entries_data
     
     def check_version_id_exists(self,id, entries) -> bool:
+        """
+        Check if the given ID exists in the list of entries and return True if it does, otherwise return False.
+        
+        :param id: The ID to check for existence in the entries list
+        :param entries: The list of entries to search for the given ID
+        :return: bool indicating whether the ID exists in the entries list
+        """
         return [entry for entry in entries if entry.get('ID') == id]
     
     def get_reports_data_from_entries(self, entries) -> list:
+        """
+        A function that retrieves reports data from a list of entries.
+
+        Parameters:
+            entries (list): A list of entries to extract reports data from.
+
+        Returns:
+            list: A list containing the reports data extracted from the entries.
+        """
         result = []
         for entry in entries:
             reports = entry.get("created_library_entries")
@@ -92,6 +153,16 @@ class OrklConverter:
         return result        
                 
     def get_reports_data(self, reports) -> list:
+        """
+        Retrieve data from reports using their IDs and return a list of report data.
+        
+        Parameters:
+            self: The object instance.
+            reports: A list of report IDs.
+        
+        Returns:
+            list: A list containing the data of each report.
+        """
         result = []
         for report in reports:
             report_data = self.client_api.get_entry_by_id(report)["data"]
@@ -150,7 +221,9 @@ class OrklConverter:
         current_entry_reports=[]
         reports = entry.get("created_library_entries")
         entry_id=entry["ID"]
+        # check if there are any reports to process
         if reports:
+            # get all orkl reports data in current_entry_reports
             current_entry_reports+=self.get_reports_data(reports)
             if current_entry_reports is not None:
                 if(len(current_entry_reports) == 0):
@@ -161,7 +234,7 @@ class OrklConverter:
                     )
                     self.helper.log_info(info_msg)
                 else:
-                    # Process and store data in chunks of 100
+                    # process each orkl report data, convert to stix and send to OCTI
                     for i in range(0, len(current_entry_reports), 1):
                         processed_object = self.process_object(current_entry_reports[i])
                         if len(processed_object) != 0:
@@ -198,38 +271,62 @@ class OrklConverter:
         return result
         
     def check_entries_processed_limit_reached(self,count:int):
+        """
+        Check if the count exceeds the maximum entries to process and return True or False accordingly.
+        
+        Parameters:
+            count (int): The count to be checked against the maximum entries to process.
+        
+        Returns:
+            bool: True if the count exceeds the maximum entries to process, False otherwise.
+        """
         if count>int(self.config.max_entries_to_process):
             return True
         else:
             return False
     
     def update_version_sync_done(self, version):
+        """
+        Updates the version sync status orkl library entry id in the sync_details.json file.
+
+        :param version: int - The version to mark as synced.
+        :return: None
+        """
         root_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = "sync_details.json"
         file_path = os.path.join(root_dir, file_path)
         result = {"version_sync_done": int(version)}
         write_json_to_file(file_path,result)
         
-    def is_invalid_date(self,date_string):
-        try:
-            # check if there is z in string
-            if "Z" in date_string:
-                date_string = date_string[:-1]
-            # Convert the string to a datetime object
-            date_object = datetime.fromisoformat(date_string)
-            # Define the range of invalid dates
-            invalid_date_range_start = datetime(1900, 1, 1, 0, 0, 0)
-            invalid_date_range_end = datetime(9999, 12, 31, 23, 59, 59)
-            # Check if the date falls within the invalid range
-            if invalid_date_range_start <= date_object <= invalid_date_range_end:
-                return True
-            else:
-                return False
-        except ValueError:
-            # Handle the case where the string is not a valid ISO format
-            return True
+    # def is_invalid_date(self,date_string):
+    #     try:
+    #         # check if there is z in string
+    #         if "Z" in date_string:
+    #             date_string = date_string[:-1]
+    #         # Convert the string to a datetime object
+    #         date_object = datetime.fromisoformat(date_string)
+    #         # Define the range of invalid dates
+    #         invalid_date_range_start = datetime(1900, 1, 1, 0, 0, 0)
+    #         invalid_date_range_end = datetime(9999, 12, 31, 23, 59, 59)
+    #         # Check if the date falls within the invalid range
+    #         if invalid_date_range_start <= date_object <= invalid_date_range_end:
+    #             return True
+    #         else:
+    #             return False
+    #     except ValueError:
+    #         # Handle the case where the string is not a valid ISO format
+    #         return True
     
     def check_date_is_in_franctional_format(self, date_str):
+        """
+        A function to check if the given date string is in fractional format and return the corresponding datetime object.
+        
+        Parameters:
+        - date_str (str): A string representing a date, potentially in fractional format.
+        
+        Returns:
+        - datetime object: The datetime object corresponding to the input date string, or None if the date format is invalid.
+        """
         result = None
         try:
             if "Z" in date_str:
@@ -244,32 +341,31 @@ class OrklConverter:
         return result
     
     def check_and_handle_date_formats(self, date_str):
-        format_completed=False
+        """
+        Check and handle date formats.
+
+        Parameters:
+            date_str (str): The date string to be checked and handled
+
+        Returns:
+            result: The result of checking and handling the date formats
+        """
         result = self.check_date_is_in_franctional_format(date_str)
         if result is None:
             result = self.check_valid_format_timezone(date_str)
-            if result is not None:
-                format_completed = True
-        else:
-            format_completed=True
         return result
-            
         
-        # invalid_date = self.is_invalid_date(date_str)
-        # if invalid_date:
-        #     return None
-        # else:
-        #     try:
-        #         parsed_date = datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%S.%fZ")
-        #     except ValueError:
-        #         parsed_date = self.check_valid_format_timezone(date_str)
-        #         if parsed_date is None:
-        #             # If parsing fails, log and return None
-        #             self.log_invalid_date(date_str)
-        #             return None
-        #     return parsed_date
     
     def check_valid_format_timezone(self, date_str):
+        """
+        Check if the input date string is in a valid format for a timezone. If valid, return the converted datetime object. If not valid, log the invalid date and return None.
+        
+        Parameters:
+        - date_str (str): A string representing a date in the format "%Y-%m-%dT%H:%M:%SZ"
+        
+        Returns:
+        - datetime object if the date_str is in a valid format, None otherwise
+        """
         try:
             return datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
         except ValueError:
@@ -278,6 +374,12 @@ class OrklConverter:
             return None
 
     def log_invalid_date(self, date_str):
+        """
+        Logs an invalid date format detected in the given date string from the orkl api and replaces it with None.
+        
+        :param date_str: The date string with invalid format
+        :return: None
+        """
         info_msg = (
             f"[CONVERTER] Invalid date format detected in {date_str} from orkl api. "
             f"Replacing with None."
@@ -286,12 +388,27 @@ class OrklConverter:
         
 
     def resolve_source_names(self, source_name):
+        """
+        Resolve the source names based on the input source name and check if it is valid source name
+
+        :param source_name: str, the name of the source
+        :return: str, the resolved shortname of the source
+        """
         shortname = source_name
         if ":" in source_name:
             shortname = source_name.split(":")[0]
         return shortname
     
     def check_if_source_exists(self, name:str):
+        """
+        Check if a source with the given name exists in the opencti system.
+
+        Parameters:
+            name (str): The name of the source to check.
+
+        Returns:
+            object: The existing identity object if found, otherwise None.
+        """
         identity_obj = None
         identities = self.helper.api.stix_domain_object.list(
                                             types=["Identity"],
@@ -307,6 +424,15 @@ class OrklConverter:
         return identity_obj
     
     def check_if_threat_actor_exists(self, name:str):
+        """
+        Check if a threat actor with the given name exists in the system.
+
+        Args:
+            name (str): The name of the threat actor to check.
+
+        Returns:
+            object: The threat actor object if it exists, otherwise None.
+        """
         ta_obj = None
         ta_objs = self.helper.api.stix_domain_object.list(
                                             types=["ThreatActorGroup","ThreatActorIndividual","ThreatActor"],
@@ -557,6 +683,7 @@ class OrklConverter:
             result.append(report_source)
                     
         # Check if the length of report_object_references is 0
+        # sometimes this happens when there are no tools and threat actors so we need to handle that
         # This means report does not have any references or has only existing OCTI references
         # This case needs to be handled so that report_object_references is not empty
         if len(report_object_references) == 0:
