@@ -73,104 +73,7 @@ class OrklConnector:
             + " hours"
         )
 
-    def _import_recent(self, now: datetime, work_id: str) -> None:
-        """
-        Import the most recent orkls depending on date range chosen
-        :param now: Current date in datetime
-        :param work_id: Work id in string
-        """
-        if self.config.max_date_range > MAX_AUTHORIZED:
-            error_msg = "The max_date_range cannot exceed {} days".format(
-                MAX_AUTHORIZED
-            )
-            raise Exception(error_msg)
-
-        date_range = timedelta(days=self.config.max_date_range)
-        start_date = now - date_range
-
-        orkl_params = self._update_orkl_params(start_date, now)
-
-        self.converter.perform_sync_from_year(work_id)
-
-    def _import_history(
-        self, start_date: datetime, end_date: datetime, work_id: str
-    ) -> None:
-        """
-        Import orkls history if pull_history config is True
-        :param start_date: Start date in datetime
-        :param end_date: End date in datetime
-        :param work_id: Work id in string
-        """
-        years = range(start_date.year, end_date.year + 1)
-        start, end = start_date, end_date + timedelta(1)
-
-        for year in years:
-            year_start = datetime(year, 1, 1, 0, 0)
-            year_end = datetime(year + 1, 1, 1, 0, 0)
-
-            date_range = min(end, year_end) - max(start, year_start)
-            days_in_year = date_range.days
-
-            # If the year is the current year, get all days from start year to now
-            if year == end_date.year:
-                date_range = end_date - year_start
-                days_in_year = date_range.days
-
-            start_date_current_year = year_start
-
-            while days_in_year > 0:
-                end_date_current_year = start_date_current_year + timedelta(
-                    days=MAX_AUTHORIZED
-                )
-                info_msg = (
-                    f"[CONNECTOR] Connector retrieve orkl history for year {year}, "
-                    f"{days_in_year} days left"
-                )
-                self.helper.log_info(info_msg)
-
-                """
-                If retrieve history for this year and days_in_year left are less than 120 days
-                Retrieve orkls from the rest of days                         
-                """
-                if year == end_date.year and days_in_year < MAX_AUTHORIZED:
-                    end_date_current_year = start_date_current_year + timedelta(
-                        days=days_in_year
-                    )
-                    # Update date range
-                    orkl_params = self._update_orkl_params(
-                        start_date_current_year, end_date_current_year
-                    )
-
-                    self.converter.perform_sync_from_year(work_id)
-                    days_in_year = 0
-
-                """
-                Retrieving for each year MAX_AUTHORIZED = 120 days
-                1 year % 120 days => 5 or 6 (depends if it is a leap year or not)
-                """
-                if days_in_year > 6:
-                    # Update date range
-                    orkl_params = self._update_orkl_params(
-                        start_date_current_year, end_date_current_year
-                    )
-
-                    self.converter.perform_sync_from_year(work_id)
-                    start_date_current_year += timedelta(days=MAX_AUTHORIZED)
-                    days_in_year -= MAX_AUTHORIZED
-                else:
-                    end_date_current_year = start_date_current_year + timedelta(
-                        days=days_in_year
-                    )
-                    # Update date range
-                    orkl_params = self._update_orkl_params(
-                        start_date_current_year, end_date_current_year
-                    )
-                    self.converter.perform_sync_from_year(work_id)
-                    days_in_year = 0
-
-            info_msg = f"[CONNECTOR] Importing orkl history for year {year} finished"
-            self.helper.log_info(info_msg)
-
+    
     def get_interval(self):
         return self.config.interval
 
@@ -185,19 +88,6 @@ class OrklConnector:
         self.helper.log_info("[CONNECTOR] Getting the last orkls since the last run...")
 
         self.converter.perform_sync_from_year(work_id)
-
-    @staticmethod
-    def _update_orkl_params(start_date: datetime, end_date: datetime) -> dict:
-        """
-        Update orkl params to handle date range
-        :param start_date: Start date in datetime
-        :param end_date: End date in datetime
-        :return: Dict of orkl params
-        """
-        return {
-            "lastModStartDate": start_date.isoformat(),
-            "lastModEndDate": end_date.isoformat(),
-        }
 
     def sleep_until_next_interval(self):
         if self.helper.connect_run_and_terminate:
