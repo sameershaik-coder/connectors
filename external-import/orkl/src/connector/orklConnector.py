@@ -155,11 +155,10 @@ class OrklConnector:
             error_msg = f"[CONNECTOR] Error while processing data: {str(e)}"
             self.helper.log_error(error_msg)
 
-    def initialize_version_sync_done(self):
-        curr_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_dir = os.path.dirname(curr_dir)
-        path = Path(parent_dir)
-        FILE_DIR = path.parent.absolute()
-        file_path = str(FILE_DIR)+"/src/services/converter/sync_details.json"
-        result = {"version_sync_done": 0}
-        write_json_to_file(file_path,result)
+    def initialize_version_sync_done(self) -> None:
+        """
+        Initialize the version sync status with entry id as 0 as the connector never run or running for the first time.
+        """
+        file_path: str = os.path.dirname(os.path.abspath(__file__)) + "/../../src/services/converter/sync_details.json"
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write('{"version_sync_done": 0}')
