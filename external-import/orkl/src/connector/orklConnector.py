@@ -49,20 +49,29 @@ class OrklConnector:
         :param current_time: Time in int
         :param work_id: Work id in string
         """
-        msg = (
-            f"[CONNECTOR] Connector successfully run, storing last_run as "
-            f"{datetime.utcfromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')}"
-        )
-        self.helper.log_info(msg)
-        self.helper.api.work.to_processed(work_id, msg)
-        self.helper.set_state({"last_run": current_time})
+        try:
+            utc_time = datetime.fromtimestamp(current_time, timezone.utc)
+            msg = (
+                f"[CONNECTOR] Connector successfully run, storing last_run as "
+                f"{utc_time.strftime('%Y-%m-%d %H:%M:%S')}"
+            )
+            self.helper.log_info(msg)
+            self.helper.api.work.to_processed(work_id, msg)
+            self.helper.set_state({"last_run": current_time})
 
-        interval_in_hours = round(self.config.interval / 60 / 60, 2)
-        self.helper.log_info(
-            "[CONNECTOR] Last_run stored, next run in: "
-            + str(interval_in_hours)
-            + " hours"
-        )
+            interval_in_hours = round(self.config.interval / 60 / 60, 2)
+            self.helper.log_info(
+                "[CONNECTOR] Last_run stored, next run in: "
+                + str(interval_in_hours)
+                + " hours"
+            )
+        except Exception as e:
+            self.helper.log_info(
+                "[CONNECTOR] Last_run store failed with following exception : {e}, next run in: "
+                + str(interval_in_hours)
+                + " hours"
+            )
+            
 
     
     def get_interval(self):
