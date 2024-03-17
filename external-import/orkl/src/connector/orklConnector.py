@@ -27,11 +27,11 @@ class OrklConnector:
         self.helper.log_info("[CONNECTOR] Fetching datasets...")
         get_run_and_terminate = getattr(self.helper, "get_run_and_terminate", None)
         if callable(get_run_and_terminate) and self.helper.get_run_and_terminate():
-            self.process_data()
+            self.handle_sync()
             self.helper.force_ping()
         else:
             while True:
-                self.process_data()
+                self.handle_sync()
 
     def _initiate_work(self, timestamp: int) -> str:
         """
@@ -112,7 +112,7 @@ class OrklConnector:
         self.update_connector_state(current_time, work_id)
         self.sleep_until_next_interval()
 
-    def process_data(self) -> None:
+    def handle_sync(self) -> None:
         try:
             """
             Get the current state and check if connector already runs
