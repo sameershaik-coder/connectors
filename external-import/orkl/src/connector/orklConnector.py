@@ -75,6 +75,9 @@ class OrklConnector:
 
     
     def get_interval(self):
+        """
+        Get the interval from the config and return it.
+        """
         return self.config.interval
 
 
@@ -90,11 +93,15 @@ class OrklConnector:
         self.converter.perform_sync_from_year(work_id)
 
     def sleep_until_next_interval(self):
+        """
+        Generate a function comment for the given function body in a markdown code block with the correct language syntax.
+        """
         if self.helper.connect_run_and_terminate:
             self.helper.log_info("Connector stop")
             self.helper.metric.state("stopped")
             self.helper.force_ping()
             sys.exit(0)
+        
         # Sleep during debugging    
         print("going to sleep for 300 seconds")
         time.sleep(300)
