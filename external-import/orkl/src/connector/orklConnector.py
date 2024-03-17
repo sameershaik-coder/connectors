@@ -1,6 +1,6 @@
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from pycti import OpenCTIConnectorHelper  # type: ignore
 from services import OrklConverter  # type: ignore
@@ -39,18 +39,9 @@ class OrklConnector:
         :param timestamp: Timestamp in integer
         :return: Work id in string
         """
-        now = datetime.utcfromtimestamp(timestamp)
-        friendly_name = f"{self.helper.connect_name} run @ " + now.strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
-        work_id = self.helper.api.work.initiate_work(
-            self.helper.connect_id, friendly_name
-        )
-
-        info_msg = f"[CONNECTOR] New work '{work_id}' initiated..."
-        self.helper.log_info(info_msg)
-
-        return work_id
+        utc_time = datetime.fromtimestamp(timestamp, timezone.utc)
+        work_description = f"{self.helper.connect_name} run @ {utc_time.strftime('%Y-%m-%d %H:%M:%S')}"
+        return self.helper.api.work.initiate_work(self.helper.connect_id, work_description)
 
     def update_connector_state(self, current_time: int, work_id: str) -> None:
         """
@@ -104,6 +95,15 @@ class OrklConnector:
         time.sleep(self.get_interval())
     
     def run_task(self, last_run):
+        """
+        Run the task of syncing data from orkl to opencti.
+
+        Args:
+            last_run (datetime): The datetime of the last run of connector.
+
+        Returns:
+            None
+        """
         now = datetime.now()
         current_time = int(datetime.timestamp(now))
         # Initiate work_id to track the job
