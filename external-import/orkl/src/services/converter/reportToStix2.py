@@ -7,7 +7,7 @@ from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore
 import os, json
 from services.utils import get_json_object_from_file,write_json_to_file
-import jsonpickle
+
 
 class OrklConverter:
     def __init__(self, helper):

@@ -5,19 +5,17 @@ opencti:
 connector:
   id: 'ChangeMe'
   type: 'EXTERNAL_IMPORT'
-  name: 'Common Vulnerabilities and Exposures'
-  scope: 'identity,vulnerability'
-  confidence_level: 75 # From 0 (Unknown) to 100 (Fully trusted)
+  name: 'ORKL Connector 1.0'
+  scope: 'identity,reports,threat-actors,tools'
   update_existing_data: false
   run_and_terminate: false
   log_level: 'info'
 
-cve:
-  base_url: 'https://services.nvd.nist.gov/rest/json/cves' # Required
-  api_key: 'ChangeMe' # Required
-  interval: 0.066 # Required, in hours advice min 2
-  max_date_range: 120 # In days, max 120
+orkl:
+  base_url: 'https://orkl.eu/api/v1/library' # Required
+  interval: 2 # Required, in hours advice min 2
   maintain_data: True # Required, retrieve only updated data
-  pull_history: False # If True, history_start_year is required
-  history_start_year: 2019 # Required if pull_history is True, min 2019 (see documentation CVE and CVSS base score V3.1)
+  pull_history: True # If True, history_start_year is required
+  history_start_year: 2024 # Required if pull_history is True
+  max_entries_to_process: 1 # Maximum number of entries to be processed every connector run
 

@@ -70,10 +70,6 @@ class ConfigOrkl:
 
         self.interval = convert_hours_to_seconds(self.config_interval)
 
-        self.max_date_range = get_config_variable(
-            "ORKL_MAX_DATE_RANGE", ["orkl", "max_date_range"], self.load, isNumber=True
-        )
-
         self.maintain_data = get_config_variable(
             "ORKL_MAINTAIN_DATA", ["orkl", "maintain_data"], self.load
         )
