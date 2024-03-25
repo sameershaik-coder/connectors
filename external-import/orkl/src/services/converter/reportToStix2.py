@@ -1,7 +1,7 @@
 import datetime
 import time
 import stix2
-from pycti import Identity,StixCoreRelationship, Report, CustomObservableText,ThreatActor,ThreatActorIndividual,Tool  # type: ignore
+from pycti import Identity,StixCoreRelationship, Report, ThreatActorIndividual,Tool  # type: ignore
 from services.utils import APP_VERSION, ConfigOrkl  # type: ignore
 from datetime import datetime
 from ..client import ReportClient as ReportClient  # type: ignore

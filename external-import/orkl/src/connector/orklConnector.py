@@ -1,3 +1,4 @@
+import json
 import sys
 import time
 from datetime import datetime, timedelta, timezone
@@ -176,5 +177,15 @@ class OrklConnector:
         Initialize the version sync status with entry id as 0 as the connector never run or running for the first time.
         """
         file_path: str = os.path.dirname(os.path.abspath(__file__)) + "/../../src/services/converter/sync_details.json"
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write('{"version_sync_done": 0}')
+        #file_path: str = "/opt/opencti-connector-orkl"+"/services/converter/sync_details.json"
+        print("Checking if path exists")
+        try:
+            with open(file_path, "r+", encoding="utf-8") as f:
+                data = json.load(f)
+                data["version_sync_done"] = 0  # Update the value if needed
+                f.seek(0)  # Move the file pointer to the beginning
+                json.dump(data, f)  # Write the updated data
+                f.truncate()  # Truncate any remaining data after the update
+        except FileNotFoundError:
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump({"version_sync_done": 0}, f)
