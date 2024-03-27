@@ -176,8 +176,8 @@ class OrklConnector:
         """
         Initialize the version sync status with entry id as 0 as the connector never run or running for the first time.
         """
-        file_path: str = os.path.dirname(os.path.abspath(__file__)) + "/../../src/services/converter/sync_details.json"
-        #file_path: str = "/opt/opencti-connector-orkl"+"/services/converter/sync_details.json"
+        #file_path: str = os.path.dirname(os.path.abspath(__file__)) + "/../../src/services/converter/sync_details.json"
+        file_path: str = "/opt/opencti-connector-orkl"+"/services/converter/sync_details.json"
         print("Checking if path exists")
         try:
             with open(file_path, "r+", encoding="utf-8") as f:
